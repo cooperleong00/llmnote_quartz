@@ -1,37 +1,48 @@
 ---
-description: Attention 机制导航：核心机制、效率变体、位置编码
+description: Attention 机制导航：核心机制、KV Cache 变体、位置编码、长上下文与高效注意力
 type: moc
+tags:
+  - attention
+  - architecture
+  - inference
 created: 2025-01-26
-updated: 2026-01-28T21:07
+updated: 2026-05-29T00:00
 ---
 
 # MOC - Attention
 
-注意力机制（Attention）是 Transformer 架构的核心，也是现代 LLM 的基础。本 MOC 组织 Attention 相关的所有概念，包括核心机制、效率变体和位置编码。
+Attention 是 Transformer 的核心计算机制，也是推理成本、长上下文能力和现代架构改进的交汇点。本 MOC 组织从基础公式到 KV Cache、位置编码、高效注意力和长序列建模的学习路径。
 
 ---
 
 ## 概览
 
 ```
-Attention 机制
+Attention
 ├── 核心机制
 │   ├── [[Attention]] — Scaled Dot-Product Attention
-│   └── [[Multi-Head Attention]] — 多头注意力
+│   └── [[Multi-Head Attention]] — 多头并行关注不同子空间
 │
-├── 效率变体（KV Cache 优化）
-│   ├── [[Multi-Query Attention]] — 所有头共享 K/V
+├── KV Cache 与推理效率
+│   ├── [[KV Cache]] — 自回归生成的缓存机制
+│   ├── [[Multi-Query Attention]] — 所有 head 共享 K/V
 │   ├── [[Grouped-Query Attention]] — 分组共享 K/V
-│   └── [[Multi-head Latent Attention]] — 低秩压缩 K/V (DeepSeek)
+│   └── [[Multi-head Latent Attention]] — DeepSeek 的低秩 KV 压缩
 │
-├── Efficient Attention
-│   ├── 计算层: [[Flash Attention]] — IO-aware 算法
-│   └── 服务层: [[KV Cache]] → [[Paged Attention]] / [[Radix Attention]]
+├── 位置与长度
+│   ├── [[Positional Encoding]] — 位置信息注入
+│   ├── [[RoPE]] / [[ALiBi]] — 主流位置编码
+│   └── [[Length Extrapolation]] — 超出训练长度的推理
 │
-└── 位置编码
-    ├── [[Positional Encoding]] — 基础概念
-    ├── [[RoPE]] — 旋转位置编码
-    └── [[ALiBi]] — 注意力线性偏置
+├── 高效注意力
+│   ├── [[Flash Attention]] — IO-aware 精确算法
+│   ├── [[Sparse Attention]] / [[Sliding Window Attention]]
+│   └── [[Linear Attention]] / [[DeltaNet]]
+│
+└── 训练与稳定性
+    ├── [[Attention Sink]] — attention outlier 与 sink 现象
+    ├── [[Gated Attention]] — 用 gating 缓解 sink 并提升稳定性
+    └── [[Attention Residuals]] — 用 attention 聚合跨层残差
 ```
 
 ---
@@ -40,171 +51,115 @@ Attention 机制
 
 ### Scaled Dot-Product Attention
 
-[[Attention]] 是 Transformer 的基础组件：
+[[Attention]] 用 Query 和 Key 的相似度决定每个位置应从 Value 中读取多少信息：
 
 $$
 \text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right) V
 $$
 
-**关键特性**：
-- 时间复杂度：$O(n^2 d)$
-- 空间复杂度：$O(n^2)$
-- 置换不变性（需要位置编码）
+这里有三个学习重点：
+
+- $QK^T$ 建立 token 间的动态相关性。
+- $\sqrt{d_k}$ 缩放避免 dot product 随维度增大导致 softmax 饱和。
+- softmax 让每个位置形成对上下文的加权读取。
 
 ### Multi-Head Attention
 
-[[Multi-Head Attention]] 通过并行多个注意力头，让模型学习不同的关注模式：
+[[Multi-Head Attention]] 让多个 head 并行学习不同子空间中的依赖关系：
 
 $$
 \text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1, ..., \text{head}_h) W^O
 $$
 
-**设计动机**：
-- 不同头关注不同子空间
-- 学习多种依赖关系（语法、语义、位置）
-- 计算量与单头相同
+它带来更强的表达能力，也带来推理时 KV Cache 随 head 数增长的问题。后续的 MQA、GQA、MLA 都围绕这个瓶颈展开。
 
 ---
 
-## 效率变体
+## KV Cache 与推理效率
 
-### KV Cache 问题
+自回归生成每次只新增一个 token，历史 token 的 Key/Value 可以复用。[[KV Cache]] 将这些 K/V 缓存在显存中，避免重复计算历史前缀。
 
-自回归生成时，需要缓存历史 token 的 Key 和 Value。标准 MHA 的 KV Cache 随头数线性增长，成为长序列推理的瓶颈。
+| 方案 | 核心思想 | KV Cache 规模 | 典型用途 |
+|------|----------|---------------|----------|
+| [[Multi-Head Attention|MHA]] | 每个 head 有独立 K/V | 最大 | 基础结构，质量稳定 |
+| [[Grouped-Query Attention|GQA]] | 多个 query head 共享一组 K/V | 中等 | Llama、Mistral、Qwen 常用 |
+| [[Multi-Query Attention|MQA]] | 所有 query head 共享 K/V | 最小 | 强调推理效率 |
+| [[Multi-head Latent Attention|MLA]] | 将 K/V 压缩到 latent 表示 | 极小 | DeepSeek 系列的核心优化 |
 
-### 解决方案对比
-
-| 方法 | 核心思想 | KV Cache | 质量 | 代表模型 |
-|------|----------|----------|------|----------|
-| [[Multi-Head Attention\|MHA]] | 每头独立 K/V | $h \times$ | 最好 | GPT-3, Llama 1 |
-| [[Grouped-Query Attention\|GQA]] | 分组共享 K/V | $g \times$ | 很好 | Llama 2/3, Mistral |
-| [[Multi-Query Attention\|MQA]] | 全部共享 K/V | $1 \times$ | 较好 | PaLM, Falcon |
-| [[Multi-head Latent Attention\|MLA]] | 低秩压缩 K/V | 极小 | 很好 | DeepSeek-V2/V3 |
-
-**主流选择**：
-- 小模型：MHA（Llama 2 7B/13B）
-- 大模型：GQA（Llama 2 70B、Llama 3、Mistral）
-- 超大模型：MLA（DeepSeek-V3 671B）
-
-> [!intuition] MQA/GQA vs MLA 的本质区别
-> - **MQA/GQA**：减少 K/V 的**数量**（共享）
-> - **MLA**：减少 K/V 的**维度**（压缩）
->
-> MLA 通过低秩分解保留每个头的独立性，同时实现更激进的压缩（DeepSeek-V3 约 57 倍）。
+[[Paged Attention]] 和 [[Radix Attention]] 属于服务层的 KV Cache 管理：前者解决显存碎片，后者复用跨请求公共前缀。它们在 [[MOC - Inference]] 中展开。
 
 ---
 
-## 位置编码
+## 位置编码与长度外推
 
-### 为什么需要位置编码？
+[[Attention]] 本身对位置顺序不敏感，需要 [[Positional Encoding]] 注入顺序信息。
 
-[[Attention]] 是置换不变的，无法区分 token 顺序。[[Positional Encoding]] 注入位置信息。
+| 方法 | 位置类型 | 核心特点 | 适合关注 |
+|------|----------|----------|----------|
+| Sinusoidal PE | 绝对位置 | 原始 Transformer 方案 | 基础理解 |
+| Learnable PE | 绝对位置 | 位置向量可学习 | BERT/GPT 早期模型 |
+| [[RoPE]] | 相对位置信息 | 通过旋转编码相对距离 | Llama/Qwen/Mistral 主流方案 |
+| [[ALiBi]] | 相对偏置 | 对远距离 attention 加线性惩罚 | 长度外推 |
 
-### 主流方案
-
-| 方法 | 类型 | 长度外推 | 代表模型 |
-|------|------|----------|----------|
-| Sinusoidal | 绝对 | 差 | 原始 Transformer |
-| 可学习 PE | 绝对 | 无 | BERT, GPT-2 |
-| [[RoPE]] | 相对 | 中等 | Llama, Qwen, Mistral |
-| [[ALiBi]] | 相对 | 好 | BLOOM, MPT |
-
-**当前主流**：[[RoPE]]（Llama 系列的成功推动）
+[[Length Extrapolation]] 关注模型在超出训练长度时为何退化，以及 PI、NTK scaling、YaRN 等方法如何调整位置编码或上下文分布。
 
 ---
 
-## 复杂度总结
+## 高效 Attention
 
-| 操作 | 时间复杂度 | 空间复杂度 |
-|------|------------|------------|
-| Attention 计算 | $O(n^2 d)$ | $O(n^2)$ |
-| RoPE | $O(nd)$ | $O(1)$ |
-| ALiBi | $O(n^2)$ | $O(n^2)$ |
-| KV Cache (MHA) | — | $O(Lhnd_k)$ |
-| KV Cache (GQA) | — | $O(Lgnd_k)$ |
-| KV Cache (MLA) | — | $O(L(d_c + d_h^R))$ |
+Attention 的效率优化可以分成三层：
+
+| 层级 | 代表方法 | 解决的问题 |
+|------|----------|------------|
+| Kernel 层 | [[Flash Attention]] | 用 tiling 和 online softmax 降低 HBM 读写 |
+| 稀疏模式层 | [[Sparse Attention]], [[Sliding Window Attention]] | 降低参与 attention 的 token 数 |
+| 线性化层 | [[Linear Attention]], [[DeltaNet]] | 将二次复杂度改写为线性复杂度 |
+
+### Flash Attention
+
+[[Flash Attention]] 保持精确 attention 结果，通过重排计算和减少 HBM 访问提升速度，并把显存复杂度从 $O(n^2)$ 降到 $O(n)$。它是训练和推理框架中的基础优化。
+
+### Sparse 与 Sliding Window
+
+[[Sparse Attention]] 只计算部分注意力边，[[Sliding Window Attention]] 让每个 token 只关注局部窗口。它们适合长上下文，但需要处理远距离信息传递和全局 token 设计。
+
+[[Attention Sink]] 解释了为什么一些 token 会吸收大量 attention 权重。[[Gated Attention]] 通过在 SDPA 输出后加入 gating，引入非线性和稀疏性，缓解 sink 现象并提升稳定性。
+
+### Linear Attention 与 Test-Time Regression
+
+[[Linear Attention]] 通过 kernel trick 或状态递推降低复杂度。[[DeltaNet]] 用 delta rule 更新线性 Transformer 状态，[[Test-time Regression (2025)]] 进一步把 softmax attention、linear attention、SSM 和 fast-weight programmers 统一到 test-time regression 视角。
+
+---
+
+## 跨层与长推理
+
+[[Attention Residuals]] 用 softmax attention 替代固定残差累加，让每层通过可学习 pseudo-query 选择性聚合前面层输出，解决 PreNorm 下隐藏状态随层数增长带来的层贡献稀释。
+
+[[MEMENTO]] 将推理链分段并生成压缩摘要，通过原位 KV Cache 遮蔽降低长推理峰值内存。它把 attention 的上下文管理问题连接到 reasoning model 的推理效率。
 
 ---
 
 ## 学习路径建议
 
-**入门路线**：
-1. [[Attention]] — 理解核心机制
-2. [[Multi-Head Attention]] — 理解多头设计
-3. [[Positional Encoding]] — 理解位置信息注入
+**基础路线**：
+1. [[Attention]] — 理解 $QK^T$、softmax 和 Value 加权。
+2. [[Multi-Head Attention]] — 理解多头如何扩展表达能力。
+3. [[Positional Encoding]] → [[RoPE]] — 理解顺序信息如何进入模型。
 
-**进阶路线**：
-1. [[RoPE]] — 当前主流位置编码
-2. [[Multi-Query Attention]] / [[Grouped-Query Attention]] — 推理优化
-3. [[Multi-head Latent Attention]] — DeepSeek 的低秩压缩方案
-4. [[ALiBi]] — 长度外推方案
+**推理效率路线**：
+1. [[KV Cache]] — 建立自回归推理的显存模型。
+2. [[Grouped-Query Attention]] / [[Multi-Query Attention]] / [[Multi-head Latent Attention]] — 理解架构层的 KV 压缩。
+3. [[Paged Attention]] / [[Radix Attention]] — 理解 serving 层的缓存管理。
 
-**面试重点**：
-- Attention 的时间复杂度及其瓶颈
-- 为什么需要 Multi-Head
-- MQA/GQA/MLA 的动机和权衡
-- RoPE vs ALiBi 的对比
-
----
-
-## Efficient Attention
-
-Attention 的效率优化可以从两个层面理解：
-
-```
-Efficient Attention
-├── 计算层优化（Attention 计算本身）
-│   └── [[Flash Attention]] — IO-aware 算法，优化 HBM 访问
-│
-└── 服务层优化（KV Cache 内存管理）
-    ├── [[KV Cache]] — 基础概念，避免重复计算
-    ├── [[Paged Attention]] — 分页内存管理，减少碎片 (vLLM)
-    └── [[Radix Attention]] — 前缀树共享，跨请求复用 (SGLang)
-```
-
-### 计算层：Flash Attention
-
-[[Flash Attention]] 解决 Attention 计算的 **HBM 带宽瓶颈**：
-- 核心技术：Tiling + Online Softmax + Recomputation
-- 效果：2-4x 加速，内存从 $O(N^2)$ 降到 $O(N)$
-- 特点：**精确算法**，结果与标准 Attention 完全相同
-
-### 服务层：KV Cache 管理
-
-[[KV Cache]] 是自回归推理的核心优化，但带来内存管理挑战：
-
-| 问题 | 解决方案 |
-|------|----------|
-| 内存碎片 | [[Paged Attention]] — 借鉴 OS 分页机制 |
-| 重复存储 | [[Radix Attention]] — Radix Tree 前缀共享 |
-| KV 数量多 | [[Grouped-Query Attention\|GQA]] / [[Multi-Query Attention\|MQA]] — 架构层减少 KV heads |
-| KV 维度大 | [[Multi-head Latent Attention\|MLA]] — 低秩压缩 |
-
----
-
-## 延伸话题
-
-### 其他高效 Attention 变体
-
-- [[Sparse Attention]] — 稀疏注意力
-- [[Linear Attention]] — 线性复杂度注意力
-
-### 推理优化
-
-- [[Speculative Decoding]] — 投机解码
-- [[Continuous Batching]] — 连续批处理
-
-### 长序列处理
-
-- [[长度外推]] — 超出训练长度的推理
-- [[Sliding Window Attention]] — 滑动窗口注意力
-- [[Attention Sink]] — 解决 SWA 性能退化的 learnable bias
-- [[Ring Attention]] — 分布式长序列处理
+**长上下文路线**：
+1. [[Length Extrapolation]] — 理解训练长度外推的挑战。
+2. [[Sliding Window Attention]] → [[Attention Sink]] → [[Gated Attention]] — 理解局部注意力与稳定性。
+3. [[Linear Attention]] → [[DeltaNet]] → [[Test-time Regression (2025)]] — 理解线性序列模型的统一视角。
 
 ---
 
 ## 相关 MOC
 
-- [[MOC - Foundations]] — Transformer 基础
-- [[MOC - Inference]] — 推理优化
-- [[MOC - Post-training]] — 后训练方法
+- [[MOC - Foundations]] — Transformer、信息论和基础表示
+- [[MOC - Inference]] — KV Cache、serving、推理加速与量化
+- [[MOC - Distributed Training]] — Flash Attention 与训练系统优化
