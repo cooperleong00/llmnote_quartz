@@ -1,4 +1,28 @@
-# 面试答题文档：slime / GRPO-PPO-CISPO / SGLang / Determinism / Fully Async
+---
+type: interview
+related: "[[RL Infrastructure]]"
+difficulty: advanced
+description: 考察 RL post-training 基础设施的系统理解，覆盖 slime 数据流、GRPO/PPO/CISPO、SGLang 指标、确定性与 fully async 训练
+aliases:
+  - RL infra 面试
+  - RL post-training infrastructure interview
+prerequisites:
+  - "[[RLHF]]"
+  - "[[PPO]]"
+  - "[[GRPO]]"
+  - "[[Agentic RL]]"
+tags:
+  - post-training
+  - reinforcement-learning
+  - rl-infrastructure
+  - distributed-training
+  - inference
+  - training-stability
+created: 2026-05-28
+updated: 2026-05-28T23:42
+---
+
+# 面试答题文档：slime / [[GRPO]]-[[PPO]]-[[CISPO]] / SGLang / Determinism / Fully Async
 
 下面这份可以当作面试答题手册使用。整体思路是：**先讲系统数据流，再讲 loss 和算法，再讲工程观测与异步训练取舍**。面试时不要只背公式，要把“为什么这么做”和“出了问题怎么看”讲清楚。
 
@@ -99,13 +123,13 @@ multi-turn / agent 场景里，常见做法是：**模型输出 token 的 loss m
 
 slime 默认 training backend 是 Megatron。Megatron 侧负责模型并行、forward/backward、optimizer step；SGLang 侧负责 rollout inference。要注意一个工程细节：Megatron 不能直接读 HF checkpoint，SGLang 可以用 HF checkpoint 加载 rollout model；训练前 slime 会把 Megatron 的参数同步到 SGLang，所以 HF checkpoint 不需要是最新权重。([ThudM][6])
 
-Megatron 侧支持常见并行配置，例如 tensor parallel、sequence parallel、pipeline parallel、context parallel、expert parallel、expert tensor parallel，以及 recomputation。训练时 slime 还可以用 dynamic batch，把变长样本 pack 起来，并通过 `max-tokens-per-gpu` 控制每张卡上的 token 数，保证 loss 正确性。([ThudM][6])
+Megatron 侧支持常见并行配置，例如 [[Tensor Parallelism|tensor parallel]]、sequence parallel、[[Pipeline Parallelism|pipeline parallel]]、context parallel、[[Expert Parallelism|expert parallel]]、expert tensor parallel，以及 recomputation。训练时 slime 还可以用 [[Continuous Batching|dynamic batch]]，把变长样本 pack 起来，并通过 `max-tokens-per-gpu` 控制每张卡上的 token 数，保证 loss 正确性。([ThudM][6])
 
 ---
 
 ### 1.5 loss 怎么计算：GRPO / PPO 的主公式
 
-slime 训练侧会先得到当前 policy 的 logprob，必要时得到 reference logprob、critic value，然后算 advantage / returns。代码里 GRPO/GSPO 路径会把 reward 转成 per-token return；PPO 路径会把 KL penalty 加到 token reward 上，然后用 value 和 GAE 算 advantage/return。([GitHub][7])
+slime 训练侧会先得到当前 policy 的 logprob，必要时得到 reference logprob、[[Value Function|critic value]]，然后算 advantage / returns。代码里 GRPO/[[GSPO]] 路径会把 reward 转成 per-token return；PPO 路径会把 [[KL Divergence|KL penalty]] 加到 token reward 上，然后用 value 和 [[GAE]] 算 advantage/return。([GitHub][7])
 
 核心 policy loss 可以这样讲：
 
@@ -123,7 +147,7 @@ policy_loss = max(pg_loss_1, pg_loss_2)
 loss = policy_loss - entropy_coef * entropy + kl_loss_coef * ref_kl
 ```
 
-这和 slime 代码一致：`compute_policy_loss` 里先算 `ratio = exp(-ppo_kl)`，再取 unclipped loss 和 clipped loss 的最大值；actor loss 里还会加 entropy 项和可选 reference KL loss。([GitHub][8])
+这和 slime 代码一致：`compute_policy_loss` 里先算 `ratio = exp(-ppo_kl)`，再取 unclipped loss 和 clipped loss 的最大值；actor loss 里还会加 [[Entropy|entropy]] 项和可选 reference KL loss。([GitHub][8])
 
 slime 的 KL 支持多种近似，比如 `k1`、`k2`、`k3/low_var_kl`；`low_var_kl` 对应一种低方差、非负的 KL 估计。Quick Start 中 GRPO 示例也会配置 `--use-kl-loss`、`--kl-loss-coef`、`--kl-loss-type low_var_kl`、`--eps-clip` 等参数。([GitHub][8])
 
@@ -141,7 +165,7 @@ slime 的 KL 支持多种近似，比如 `k1`、`k2`、`k3/low_var_kl`；`low_va
 
 ### 2.1 GRPO advantage 怎么算
 
-GRPO 的核心是：**不用 critic，而是对同一个 prompt 采样一组 response，用组内 reward 做相对比较**。DeepSeekMath 论文提出 GRPO 时就强调，它省掉 critic model，用 group scores 估计 baseline，从而降低 PPO 的资源消耗。([ar5iv][9])
+GRPO 的核心是：**不用 critic，而是对同一个 prompt 采样一组 response，用组内 reward 做相对比较**。[[DeepSeekMath (2024)|DeepSeekMath]] 论文提出 GRPO 时就强调，它省掉 critic model，用 group scores 估计 baseline，从而降低 PPO 的资源消耗。([ar5iv][9])
 
 最常见的 outcome-level GRPO advantage 是：
 
@@ -163,7 +187,7 @@ A_i = (R_i - mean_R) / (std_R + ε)
 
 ### 2.2 如果不减 baseline 会怎么样
 
-从 policy gradient 的数学上讲，只要 baseline 不依赖当前 action，减 baseline 不改变期望梯度，但会显著降低方差。GRPO 里组内 baseline 的意义更具体：它把“绝对 reward”变成“同一 prompt 下哪个 answer 更好”。DeepSeekMath/GRPO 的解释就是用 group average reward 替代 learned value baseline。([ar5iv][9])
+从 [[Policy Gradient|policy gradient]] 的数学上讲，只要 baseline 不依赖当前 action，减 baseline 不改变期望梯度，但会显著降低方差。GRPO 里组内 baseline 的意义更具体：它把“绝对 reward”变成“同一 prompt 下哪个 answer 更好”。DeepSeekMath/GRPO 的解释就是用 group average reward 替代 learned value baseline。([ar5iv][9])
 
 不减 baseline 的问题主要有四个：
 
@@ -239,7 +263,7 @@ L = -clip(r_t, lower, upper) * A_t
 
 ### 2.5 如果 PPO 不 clip 会怎么样
 
-不 clip 时，loss 变成普通 importance-ratio policy gradient：
+不 clip 时，loss 变成普通 [[Importance Sampling|importance-ratio]] policy gradient：
 
 ```text
 L = -r_t * A_t
@@ -248,9 +272,9 @@ L = -r_t * A_t
 问题是当 `r_t` 很大或很小时，少数 token 会主导梯度。尤其在 LLM RL 里，长序列、旧 rollout logprob、stale policy、reward 噪声都会放大 ratio mismatch。结果通常是：
 
 1. KL spike，模型突然远离 old policy / reference policy；
-2. entropy collapse，输出分布过早变尖；
-3. reward hacking 或格式崩坏；
-4. off-policy 样本权重爆炸；
+2. [[Entropy Collapse|entropy collapse]]，输出分布过早变尖；
+3. [[Reward Hacking|reward hacking]] 或格式崩坏；
+4. [[On-Policy vs Off-Policy|off-policy]] 样本权重爆炸；
 5. 训练曲线出现大幅震荡。
 
 如果面试官追问“有 KL penalty 还要不要 clip”，可以回答：
@@ -261,7 +285,7 @@ L = -r_t * A_t
 
 ### 2.6 CISPO 是怎么做的
 
-CISPO 来自 MiniMax-M1，核心区别是：**PPO clip ratio 后会让一些 clipped token 的梯度被 suppress；CISPO 改成 clip importance weight 本身，并 detach 这个 clipped weight，让 clipped token 仍然通过 logprob 项贡献梯度**。SWIFT 文档把 CISPO 的 loss 写成类似下面的形式：([Swift 文档][11])
+CISPO 来自 [[MiniMax-M1 (2025)|MiniMax-M1]]，核心区别是：**PPO clip ratio 后会让一些 clipped token 的梯度被 suppress；CISPO 改成 clip importance weight 本身，并 detach 这个 clipped weight，让 clipped token 仍然通过 logprob 项贡献梯度**。SWIFT 文档把 CISPO 的 loss 写成类似下面的形式：([Swift 文档][11])
 
 ```text
 w_t = exp(logπθ - logπold)
@@ -289,7 +313,7 @@ L_CISPO = - w_t_clipped * A_t * logπθ
 1. **trust-region 约束变弱**
    PPO 的 clipped objective 是 pessimistic bound：当 ratio 已经过大时，不再继续奖励这个方向。CISPO 仍然给高-ratio token 梯度，只是把权重 capped；如果 reward/advantage 有噪声，policy 仍可能被继续推远。
 
-2. **token-level credit assignment 更敏感**
+2. **token-level [[Credit Assignment|credit assignment]] 更敏感**
    在 outcome-level RL 里，一个 response 的所有 token 经常共享同一个 advantage。ASPO 论文也指出，在 outcome-supervised RL 中，所有 token 共用 response-level advantage 可能让 token-level advantage 不准确甚至误导。CISPO 保留 clipped token 梯度，会把这种 credit assignment 错误放大。([arXiv][12])
 
 3. **对 stale/off-policy 样本更敏感**
@@ -301,7 +325,7 @@ L_CISPO = - w_t_clipped * A_t * logπθ
 
 ---
 
-## 3. SGLang 如何看利用率；KV cache 在训练中的利用率；训练时间占比
+## 3. SGLang 如何看利用率；[[KV Cache|KV cache]] 在训练中的利用率；训练时间占比
 
 ### 3.1 SGLang 利用率怎么看
 
@@ -341,7 +365,7 @@ L_CISPO = - w_t_clipped * A_t * logπθ
 
 | 任务          | KV / prefix cache 特点                                                                     |
 | ----------- | ---------------------------------------------------------------------------------------- |
-| 单轮 math     | prompt 相似度有限，prefix cache 主要命中 system prompt / template；长 CoT 会让 KV 占用高，但 cache hit 不一定高 |
+| 单轮 math     | prompt 相似度有限，prefix cache 主要命中 system prompt / template；长 [[Chain-of-Thought|CoT]] 会让 KV 占用高，但 cache hit 不一定高 |
 | 多轮 agent    | 同一个 session 反复追加历史，prefix cache 命中更重要；routing 不稳定会损失 cache                               |
 | 多样本 GRPO    | 同 prompt 采样 G 个 response，如果 batching/routing 做得好，prefill prefix 可复用                      |
 | fully async | 请求完成顺序不固定，cache hit 和调度策略强相关                                                             |
@@ -360,7 +384,7 @@ L_CISPO = - w_t_clipped * A_t * logπθ
 
 | 场景                     | rollout / reward 占比 | train forward/backward 占比 |
 | ---------------------- | ------------------: | ------------------------: |
-| 短回答 RLHF               |             30%–60% |                   40%–70% |
+| 短回答 [[RLHF]]               |             30%–60% |                   40%–70% |
 | 长 CoT math             |             50%–80% |                   15%–40% |
 | agentic tool / sandbox |             70%–95% |                    5%–30% |
 
@@ -423,7 +447,7 @@ SGLang 的 deterministic inference 工作就是在解决 dynamic batching、chun
 4. **prefix/radix cache**：cache hit/miss 改变 prefill 路径。
 5. **sampling RNG**：非 greedy sampling 如果 seed 不按 request 固定，会受 batch order 影响。
 6. **并行通信**：NCCL all-reduce、Megatron TP/PP/EP 下的通信顺序可能不同。
-7. **某些 CUDA 算子**：scatter、index_add、atomic accumulation、MoE routing 统计等都可能引入非确定性。
+7. **某些 CUDA 算子**：scatter、index_add、atomic accumulation、[[Mixture of Experts|MoE]] routing 统计等都可能引入非确定性。
 
 SGLang 博客中特别点名了 dynamic batching / radix cache 改变 reduction splitting，以及浮点非结合律；PyTorch 文档也说明确定性模式会替换或禁止某些非确定性算子。([LMSYS Org][18])
 
@@ -662,7 +686,7 @@ agentic 任务有几个特点：
 3. **同步 barrier 浪费严重**：一批里最慢的几个 trajectory 会让所有训练 GPU 等着。
 4. **reward 计算也可能慢**：需要 verifier、unit test、environment final state。
 
-异步 RL 文档也指出，agentic RL 的 tool/sandbox/env 多轮 trajectory 会有高 variance latency，straggler 会让 GPU idle；disaggregated async rollout 可以让 inference/training 并行，减少等待。([Hugging Face][15])
+异步 RL 文档也指出，[[Agentic RL|agentic RL]] 的 tool/sandbox/env 多轮 trajectory 会有高 variance latency，straggler 会让 GPU idle；disaggregated async rollout 可以让 inference/training 并行，减少等待。([Hugging Face][15])
 
 所以 agentic 任务用 fully async 的核心原因是：
 
@@ -760,4 +784,3 @@ slime 的 partial rollout 文档说，未完成样本可以 cache 半生成结�
 [19]: https://arxiv.org/html/2505.24298v2 "https://arxiv.org/html/2505.24298v2"
 [20]: https://github.com/THUDM/slime/blob/main/train_async.py "https://github.com/THUDM/slime/blob/main/train_async.py"
 [21]: https://thudm.github.io/slime/_examples_synced/fully_async/README.html "Fully-Async Rollout Example — slime"
-
