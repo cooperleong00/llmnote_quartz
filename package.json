@@ -14,6 +14,9 @@
   "scripts": {
     "quartz": "./quartz/bootstrap-cli.mjs",
     "docs": "npx quartz build --serve -d docs",
+    "content:snapshot": "bash scripts/snapshot-content.sh",
+    "publish:notes": "bash scripts/publish-notes.sh",
+    "preview:notes": "npx quartz build --serve -d \"$HOME/Obsidian/LLM\"",
     "check": "tsc --noEmit && npx prettier . --check",
     "format": "npx prettier . --write",
     "test": "tsx --test",
