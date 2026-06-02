@@ -1,5 +1,5 @@
 ---
-updated: 2026-05-29T00:07
+updated: 2026-05-31T17:53
 ---
 # Knowledge Gap Report 2026-05-28
 
@@ -333,9 +333,9 @@ updated: 2026-05-29T00:07
 | `technical-report` | 6 | [[GLM-5 (2026)]], [[Kimi K2.5 (2026)]], [[Ling 2.0 (2025)]], [[MiMo-V2-Flash (2025)]], [[Open-Source LLM Landscape (2025-2026)]], [[Step 3.5 Flash (2025)]] |
 | `survey` | 6 | [[A Survey of On-Policy Distillation for Large Language Models (2026)]], [[Agentic RL Survey (2025)]], [[LLM Mid-Training Survey (2024)]], [[Mid-Training Survey (2024)]], [[RAG Survey (2023)]], [[Towards Agentic RAG with Deep Reasoning (2025)]] |
 | `efficient-attention` | 6 | [[Attention Sink]], [[DeltaNet]], [[Linear Attention]], [[Sliding Window Attention]], [[Sparse Attention]], [[Test-time Regression (2025)]] |
-| `serving` | 5 | [[Continuous Batching]], [[MEMENTO]], [[MOC - Inference]], [[Paged Attention]], [[Radix Attention]] |
+| `serving` | 5 | [[Continuous Batching]], [[MEMENTO]], [[04-MOC - Inference|MOC - Inference]], [[Paged Attention]], [[Radix Attention]] |
 | `scaling` | 5 | [[DeepSeek-V4 (2026)]], [[Mixture of Experts]], [[Ring-1T (2025)]], [[The Art of Scaling RL Compute for LLMs (2025)]], [[The Synthetic Data Playbook (2026)]] |
-| `retrieval` | 5 | [[Embedding]], [[MOC - RAG]], [[RAG Survey (2023)]], [[RAG]], [[Reranking]] |
+| `retrieval` | 5 | [[Embedding]], [[05-MOC - RAG|MOC - RAG]], [[RAG Survey (2023)]], [[RAG]], [[Reranking]] |
 | `math` | 5 | [[Bradley-Terry Model]], [[Cross-Entropy Loss]], [[KL Divergence]], [[Lessons of Developing PRMs (2025)]], [[Process Reward Model]] |
 | `long-context` | 5 | [[CL-Bench]], [[Length Extrapolation]], [[MemAgent (2025)]], [[Sparse Attention]], [[interview/游戏 LLM Agent RL 长交互优化|游戏 LLM Agent RL 长交互优化]] |
 | `distillation` | 5 | [[A Survey of On-Policy Distillation for Large Language Models (2026)]], [[MOPD]], [[On-Policy Distillation]], [[Post-Training Phase Transition]], [[TIP]] |
@@ -543,11 +543,11 @@ updated: 2026-05-29T00:07
 | 笔记 | 总度数 | 入链 | 出链 | type |
 |---|---:|---:|---:|---|
 | [[GRPO]] | 85 | 72 | 13 | method |
-| [[MOC - Post-training]] | 83 | 8 | 75 | moc |
+| [[07-MOC - Post-training|MOC - Post-training]] | 83 | 8 | 75 | moc |
 | [[PPO]] | 78 | 68 | 10 | method |
-| [[MOC - Reinforcement Learning]] | 73 | 5 | 68 | moc |
+| [[06-MOC - Reinforcement Learning|MOC - Reinforcement Learning]] | 73 | 5 | 68 | moc |
 | [[RLHF]] | 70 | 59 | 11 | method |
-| [[MOC - Foundations]] | 56 | 4 | 52 | moc |
+| [[01-MOC - Foundations|MOC - Foundations]] | 56 | 4 | 52 | moc |
 | [[Reward Model]] | 45 | 35 | 10 | concept |
 | [[DPO]] | 44 | 32 | 12 | method |
 | [[Mixture of Experts]] | 42 | 34 | 8 | concept |
@@ -555,17 +555,17 @@ updated: 2026-05-29T00:07
 | [[SFT]] | 36 | 30 | 6 | method |
 | [[Importance Sampling]] | 36 | 28 | 8 | concept |
 | [[Policy Gradient]] | 36 | 27 | 9 | concept |
-| [[MOC - Distributed Training]] | 35 | 6 | 29 | moc |
+| [[03-MOC - Distributed Training|MOC - Distributed Training]] | 35 | 6 | 29 | moc |
 | [[Open-Source LLM Landscape (2025-2026)]] | 35 | 0 | 35 | overview |
 | [[Credit Assignment]] | 32 | 21 | 11 | concept |
 | [[KL Divergence]] | 31 | 26 | 5 | concept |
 | [[KV Cache]] | 31 | 24 | 7 | concept |
-| [[MOC - RAG]] | 31 | 10 | 21 | moc |
+| [[05-MOC - RAG|MOC - RAG]] | 31 | 10 | 21 | moc |
 | [[Flash Attention]] | 30 | 25 | 5 | method |
 | [[Transformer]] | 30 | 20 | 10 | concept |
-| [[MOC - Attention]] | 30 | 5 | 25 | moc |
+| [[02-MOC - Attention|MOC - Attention]] | 30 | 5 | 25 | moc |
 | [[Agentic RL]] | 28 | 22 | 6 | method |
-| [[MOC - Inference]] | 28 | 6 | 22 | moc |
+| [[04-MOC - Inference|MOC - Inference]] | 28 | 6 | 22 | moc |
 | [[On-Policy Distillation]] | 27 | 19 | 8 | method |
 | [[GAE]] | 26 | 22 | 4 | concept |
 | [[DAPO]] | 26 | 21 | 5 | method |

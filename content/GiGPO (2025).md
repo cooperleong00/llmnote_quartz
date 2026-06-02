@@ -9,7 +9,7 @@ tags:
   - agent
   - policy-optimization
 created: 2026-03-06
-updated: 2026-03-06
+updated: 2026-05-31T17:53
 ---
 
 # GiGPO (2025)
@@ -166,4 +166,4 @@ GiGPO 的技术路线与 [[RLHF]] 相关，但专注于 agent 训练：
 - [[Value Function]] — GiGPO 通过 group-based advantage 避免显式建模
 
 **应用领域**：
-- [[MOC - Post-training]] — LLM agent 训练是 post-training 的重要方向
+- [[07-MOC - Post-training|MOC - Post-training]] — LLM agent 训练是 post-training 的重要方向

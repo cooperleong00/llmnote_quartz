@@ -9,7 +9,7 @@ tags:
   - inference
   - efficiency
 created: 2025-01-26
-updated: 2026-01-31T22:42
+updated: 2026-05-31T17:53
 ---
 
 # Multi-Query Attention (MQA)
@@ -195,4 +195,4 @@ class MultiQueryAttention(nn.Module):
 - [[Grouped-Query Attention]] — MQA 和 MHA 的折中
 - [[KV Cache]] — MQA 优化的目标
 - [[Transformer]] — MQA 的宿主架构
-- [[MOC - Inference]] — MQA 的应用场景
+- [[04-MOC - Inference|MOC - Inference]] — MQA 的应用场景

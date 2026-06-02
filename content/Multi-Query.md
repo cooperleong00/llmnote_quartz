@@ -11,7 +11,7 @@ tags:
   - rag
   - query-optimization
 created: 2026-03-07
-updated: 2026-03-07T11:39
+updated: 2026-05-31T17:53
 ---
 
 # Multi-Query
@@ -197,7 +197,7 @@ Multi-Query（多查询生成）通过从单个用户查询生成多个语义相
 - [[Hybrid Retrieval]] — 结合多种检索策略
 
 **应用场景**：
-- [[MOC - RAG]] — RAG 系统的整体架构
+- [[05-MOC - RAG|MOC - RAG]] — RAG 系统的整体架构
 
 > [!interview] 面试要点
 >

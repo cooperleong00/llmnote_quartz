@@ -13,7 +13,7 @@ tags:
   - information-retrieval
   - embedding
 created: 2026-03-23
-updated: 2026-03-23T00:53
+updated: 2026-05-31T17:53
 ---
 
 # Dense Retrieval
@@ -484,4 +484,4 @@ results = [documents[i] for i in indices[0]]
 
 **RAG 应用**：
 - [[RAG]] — 检索增强生成的完整流程
-- [[MOC - RAG]] — RAG 领域导航
+- [[05-MOC - RAG|MOC - RAG]] — RAG 领域导航

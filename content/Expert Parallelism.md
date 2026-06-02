@@ -11,7 +11,7 @@ tags:
   - distributed-training
   - moe
 created: 2026-02-24
-updated: 2026-02-24
+updated: 2026-05-31T17:53
 ---
 
 # Expert Parallelism
@@ -128,4 +128,4 @@ $$\text{effective\_batch} = \text{micro\_batch} \times \text{ep\_data\_parallel\
 - [[LongCat-Flash (2025)]] — Shortcut-Connected MoE 扩大重叠窗口
 
 **导航**：
-- [[MOC - Distributed Training]] — 分布式训练全景
+- [[03-MOC - Distributed Training|MOC - Distributed Training]] — 分布式训练全景

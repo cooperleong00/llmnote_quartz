@@ -16,12 +16,12 @@ tags:
   - post-training
   - evaluation
 created: 2026-05-01
-updated: 2026-05-01
+updated: 2026-05-31T17:53
 ---
 
 # Qwen-Scope (2026)
 
-Qwen-Scope 是 Qwen Team 发布的一套面向 Qwen3 / Qwen3.5 的 [[Sparse Autoencoder|sparse autoencoder]]（SAE）资源和应用报告。它的核心贡献是把模型内部 activation 分解成稀疏、可解释的 feature，再把这些 feature 用作模型开发接口：可以做 inference-time steering、评测集分析、数据分类、数据合成，以及 [[MOC - Post-training|post-training]] 中的 [[SFT]] 和 [[DAPO]] 改造。
+Qwen-Scope 是 Qwen Team 发布的一套面向 Qwen3 / Qwen3.5 的 [[Sparse Autoencoder|sparse autoencoder]]（SAE）资源和应用报告。它的核心贡献是把模型内部 activation 分解成稀疏、可解释的 feature，再把这些 feature 用作模型开发接口：可以做 inference-time steering、评测集分析、数据分类、数据合成，以及 [[07-MOC - Post-training|post-training]] 中的 [[SFT]] 和 [[DAPO]] 改造。
 
 > [!paper] 论文出处
 > Qwen Team, *Qwen-Scope: Turning Sparse Features into Development Tools for Large Language Models*, 2026. 原始 clipping: [[Clippings/Paper/Qwen_Scope/Qwen_Scope|Qwen-Scope clipping]]。
@@ -130,7 +130,7 @@ Qwen-Scope 把 multilingual toxicity classification 作为一个测试：固定 
 
 ## 应用四：Post-Training 中的 SFT 与 RL
 
-Qwen-Scope 把 SAE features 接入 [[MOC - Post-training|post-training]] 的方式分成两类：在 [[SFT]] 中加入辅助 feature loss，在 [[RLHF]] / online RL 类流程中改变 rollout distribution。
+Qwen-Scope 把 SAE features 接入 [[07-MOC - Post-training|post-training]] 的方式分成两类：在 [[SFT]] 中加入辅助 feature loss，在 [[RLHF]] / online RL 类流程中改变 rollout distribution。
 
 ### SAE-Guided SFT：降低意外 Code-Switching
 
@@ -177,4 +177,4 @@ Qwen-Scope 的价值在于把 SAE feature 从解释产物变成开发接口；�
 - safety feature synthesis 是否可能被误用来增强有害能力或绕过防护。
 - post-training 后 feature dictionary 是否仍然对齐原模型的内部结构。
 
-论文提出的未来方向包括 reasoning-model interpretability、internal monitoring and auditing、model diffing、interpretability-driven control and training，以及 data-centric interpretability。对知识库来说，Qwen-Scope 可以作为连接 [[Sparse Autoencoder]]、[[Feature Steering]]、[[Representation-Level Evaluation]] 和 [[MOC - Post-training|post-training]] 工程实践的入口笔记。
+论文提出的未来方向包括 reasoning-model interpretability、internal monitoring and auditing、model diffing、interpretability-driven control and training，以及 data-centric interpretability。对知识库来说，Qwen-Scope 可以作为连接 [[Sparse Autoencoder]]、[[Feature Steering]]、[[Representation-Level Evaluation]] 和 [[07-MOC - Post-training|post-training]] 工程实践的入口笔记。

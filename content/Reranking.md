@@ -12,7 +12,7 @@ tags:
   - ranking
   - retrieval
 created: 2026-03-07
-updated: 2026-03-07T11:52
+updated: 2026-05-31T17:53
 ---
 
 # Reranking
@@ -224,7 +224,7 @@ reranked = reranker.rank(query, candidates, top_k=10)
 
 **RAG 系统**：
 - [[RAG]] — 检索增强生成的完整流程
-- [[MOC - RAG]] — RAG 领域导航
+- [[05-MOC - RAG|MOC - RAG]] — RAG 领域导航
 
 ## 速查
 

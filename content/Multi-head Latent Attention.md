@@ -14,7 +14,7 @@ tags:
   - inference
   - efficiency
 created: 2026-01-28
-updated: 2026-01-31T22:42
+updated: 2026-05-31T17:53
 ---
 
 # Multi-head Latent Attention (MLA)
@@ -239,4 +239,4 @@ MLA 也对 Query 进行低秩压缩，减少训练时的 activation 内存：
 - [[KV Cache]] — MLA 优化的目标
 - [[RoPE]] — MLA 需要特殊处理的位置编码
 - [[Flash Attention]] — 与 MLA 配合的高效 Attention 实现
-- [[MOC - Attention]] — Attention 机制导航
+- [[02-MOC - Attention|MOC - Attention]] — Attention 机制导航

@@ -11,7 +11,7 @@ tags:
   - rag
   - information-retrieval
 created: 2026-03-07
-updated: 2026-03-07T11:34
+updated: 2026-05-31T17:53
 ---
 
 # Sparse Retrieval
@@ -231,4 +231,4 @@ Top-K 结果
 - Pyserini — 学术研究工具
 
 **RAG 应用**：
-- [[MOC - RAG]] — RAG 系统概览
+- [[05-MOC - RAG|MOC - RAG]] — RAG 系统概览

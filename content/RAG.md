@@ -12,7 +12,7 @@ tags:
   - retrieval
   - knowledge-augmentation
 created: 2026-03-23
-updated: 2026-03-23T00:52
+updated: 2026-05-31T17:53
 ---
 
 # RAG
@@ -204,7 +204,7 @@ Query → Embedding → Top-K Retrieval → Concatenate → LLM Generate
 - [[Adaptive RAG]] — 自适应决定是否检索
 
 **领域导航**：
-- [[MOC - RAG]] — RAG 技术全景图
+- [[05-MOC - RAG|MOC - RAG]] — RAG 技术全景图
 
 ## 延伸阅读
 

@@ -11,12 +11,12 @@ tags:
   - rag
   - query-optimization
 created: 2026-03-07
-updated: 2026-03-07T12:00
+updated: 2026-05-31T17:53
 ---
 
 # Query Rewriting
 
-查询重写（Query Rewriting）是 [[MOC - RAG|RAG]] 系统中的预检索优化技术，通过转换用户原始查询来提升检索质量。核心思想是：用户的自然语言查询往往不是最优的检索表达——可能过于简短、含糊或使用了与文档不同的词汇。查询重写弥合这种**语义鸿沟**（semantic gap），将用户意图转化为更适合检索的形式。
+查询重写（Query Rewriting）是 [[05-MOC - RAG|RAG]] 系统中的预检索优化技术，通过转换用户原始查询来提升检索质量。核心思想是：用户的自然语言查询往往不是最优的检索表达——可能过于简短、含糊或使用了与文档不同的词汇。查询重写弥合这种**语义鸿沟**（semantic gap），将用户意图转化为更适合检索的形式。
 
 ## 动机
 
@@ -191,7 +191,7 @@ def decompose_query(query: str) -> list[str]:
 - [[Multi-Query]] — 生成多个查询并行检索（与查询分解相关）
 
 **RAG Pipeline**：
-- [[MOC - RAG]] — RAG 系统全景
+- [[05-MOC - RAG|MOC - RAG]] — RAG 系统全景
 - [[Dense Retrieval]] — 查询重写后的检索方法
 - [[Reranking]] — 检索后的精度优化
 

@@ -12,7 +12,7 @@ tags:
   - optimization
   - compression
 created: 2026-01-28
-updated: 2026-02-01T01:09
+updated: 2026-05-31T17:53
 ---
 
 # Quantization
@@ -299,4 +299,4 @@ llama.cpp 提供了一系列实用的量化格式：
 ## 延伸阅读
 
 **导航**：
-- [[MOC - Inference]] — 推理优化导航
+- [[04-MOC - Inference|MOC - Inference]] — 推理优化导航

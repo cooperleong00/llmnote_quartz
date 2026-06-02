@@ -9,7 +9,7 @@ tags:
   - foundations
   - transformer
 created: 2026-01-27
-updated: 2026-02-01T01:15
+updated: 2026-05-31T17:53
 ---
 
 # Transformer
@@ -320,4 +320,4 @@ Token Embedding + Positional Encoding
 - [[KV Cache]] — 推理时的 Attention 优化
 
 **相关 MOC**：
-- [[MOC - Attention]] — Attention 机制导航
+- [[02-MOC - Attention|MOC - Attention]] — Attention 机制导航

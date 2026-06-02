@@ -11,7 +11,7 @@ tags:
   - reinforcement-learning
   - post-training
 created: 2026-03-29
-updated: 2026-03-29T12:40
+updated: 2026-05-31T17:53
 ---
 
 # Kimi K2.5 (2026)
@@ -246,7 +246,7 @@ K2.5 在多个领域达到 SOTA 或接近 SOTA 性能：
 - [[Generative Reward Model]] — K2.5 使用的奖励模型
 
 **相关技术**：
-- [[MOC - Reinforcement Learning]] — RL 基础知识导航
+- [[06-MOC - Reinforcement Learning|MOC - Reinforcement Learning]] — RL 基础知识导航
 
 ## 延伸阅读
 

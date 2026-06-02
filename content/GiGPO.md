@@ -15,7 +15,7 @@ tags:
   - agent
   - policy-optimization
 created: 2026-03-06
-updated: 2026-03-06T02:34
+updated: 2026-05-31T17:53
 ---
 
 # GiGPO
@@ -199,4 +199,4 @@ $$
 - [[Value Function]] — GiGPO 通过 group-based advantage 避免显式建模
 
 **应用场景**：
-- [[MOC - Post-training]] — LLM agent 训练是 post-training 的重要方向
+- [[07-MOC - Post-training|MOC - Post-training]] — LLM agent 训练是 post-training 的重要方向

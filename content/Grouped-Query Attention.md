@@ -10,7 +10,7 @@ tags:
   - inference
   - efficiency
 created: 2025-01-26
-updated: 2026-02-01T00:57
+updated: 2026-05-31T17:53
 ---
 
 # Grouped-Query Attention (GQA)
@@ -210,4 +210,4 @@ class GroupedQueryAttention(nn.Module):
 - [[Multi-Head Attention]] — GQA 的基础
 - [[Multi-Query Attention]] — GQA 的极端情况
 - [[Transformer]] — GQA 的宿主架构
-- [[MOC - Inference]] — GQA 的应用场景
+- [[04-MOC - Inference|MOC - Inference]] — GQA 的应用场景
