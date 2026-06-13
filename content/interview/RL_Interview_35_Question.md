@@ -131,7 +131,7 @@ updated: 2026-06-13
 
 **工程要点：** LLM RL 中 Actor 通常就是待训练语言模型；Critic 可以是 value head、reward model、reference model 或 group baseline。若面试官追问“GRPO 没有 Critic 是否还是 Actor-Critic”，可以回答：严格说 GRPO 是 critic-free policy optimization，但它仍然使用 baseline 思想；关键区别在于 baseline 的来源：组内相对比较替代了可学习 Critic。
 
-**局限：** Actor-Critic 也有明显局限。Critic 训练滞后会引入 bias，value loss 会占内存和算力，PPO 的 actor/critic/reference/[[Reward Model|reward model]] 多模型链路复杂；这也是 GRPO、DAPO、Dr.GRPO 等方法流行的原因。参考：[TRPO] [PPO] [GAE] [DeepSeekMath/GRPO]。
+**局限：** Actor-Critic 也有明显局限。Critic 训练滞后会引入 bias，value loss 会占内存和算力，PPO 的 actor/critic/reference/[[Reward Model|reward model]] 多模型链路复杂；这也是 GRPO、DAPO、Dr.GRPO 等方法流行的原因。参考：[[TRPO]] [[PPO]] [[GAE]] [[DeepSeekMath (2024)|DeepSeekMath/GRPO]]。
 
 ### 2. KL 散度、交叉熵和 MLE 的关系是什么？
 
@@ -143,7 +143,7 @@ updated: 2026-06-13
 
 **工程要点：** PyTorch 的 cross_entropy 通常把 log_softmax 和 NLL 合并，默认 reduction 可能是 mean；分布式训练时要搞清楚按 token 平均、按 sample 平均还是按 global batch 平均。LLM post-training 中很多“loss 不对”的 bug 根源通常在 mask、长度归一化、all-reduce/reduction 约定不一致，公式本身反而常常没有问题。
 
-**陷阱：** KL 具有方向性，$KL(P||Q)$ 与 $KL(Q||P)$ 对 mode collapse 的影响不同；cross entropy 在离散 token 上正是最大似然的实现，适用范围超出分类任务。参考：[DPO] [PPO]。
+**陷阱：** KL 具有方向性，$KL(P||Q)$ 与 $KL(Q||P)$ 对 mode collapse 的影响不同；cross entropy 在离散 token 上正是最大似然的实现，适用范围超出分类任务。参考：[[DPO]] [[PPO]]。
 
 ### 3. 不同 RL 场景下奖励应该怎么设计？
 
@@ -155,7 +155,7 @@ updated: 2026-06-13
 
 **陷阱：** 常见 reward hacking 包括输出更长拿到更多“推理过程分”、复制题目或模板绕过格式检查、利用 verifier 漏洞、在代码题中硬编码测试、在 agent 任务中重复调用工具刷分。面试中要主动提监控：reward 与 human eval 的相关性、长度分布、pass@k、失败样例、OOD 集、格式错误率、KL/[[Entropy|entropy]]。
 
-**工程要点：** reward scale 会影响 PPO/GRPO 的有效学习率。二值奖励可先用组内 baseline；连续 reward 需裁剪或标准化；多目标 reward 不要简单线性相加后就不看分项指标。潜势函数 shaping 要避免改变最优策略；在 LLM 中还要避免把“更会解释”误当成“更会解题”。参考：[DeepSeek-R1] [DAPO] [SimKO]。
+**工程要点：** reward scale 会影响 PPO/GRPO 的有效学习率。二值奖励可先用组内 baseline；连续 reward 需裁剪或标准化；多目标 reward 不要简单线性相加后就不看分项指标。潜势函数 shaping 要避免改变最优策略；在 LLM 中还要避免把“更会解释”误当成“更会解题”。参考：[DeepSeek-R1](https://arxiv.org/abs/2501.12948) [[DAPO]] [SimKO](https://arxiv.org/abs/2510.14807)。
 
 ### 4. 重要性采样、拒绝采样等 Monte Carlo 方法如何融入 RL？
 
@@ -167,7 +167,7 @@ updated: 2026-06-13
 
 其他 Monte Carlo：self-normalized IS、truncated IS、per-decision IS、control variate、baseline、pass@K 无偏估计、off-policy evaluation 都属于这套思想。LLM 工程里要特别关注 logprob 精度、mask、EOS、长度归一化，因为 sequence-level ratio 会随长度指数级变大或变小。
 
-**陷阱：** 重要性采样只能在分布偏移可控时复用旧数据。旧策略和新策略 KL 过大时，rho 方差会爆炸；裁剪后虽然稳定，但优化目标已改变。拒绝采样也会丢掉失败轨迹中的有用反例，导致模型只模仿成功表面格式。参考：[PPO] [GSPO] [CTPO] [MaxRL]。
+**陷阱：** 重要性采样只能在分布偏移可控时复用旧数据。旧策略和新策略 KL 过大时，rho 方差会爆炸；裁剪后虽然稳定，但优化目标已改变。拒绝采样也会丢掉失败轨迹中的有用反例，导致模型只模仿成功表面格式。参考：[[PPO]] [[GSPO]] [[CTPO]] [MaxRL](https://arxiv.org/abs/2602.02710)。
 
 ### 5. PPO 和 GRPO 中 advantage 怎么算？为什么要减 baseline？标准差归一化必要吗？
 
@@ -179,7 +179,7 @@ GRPO：对同一 prompt 生成 $G$ 个回答，得到奖励 $R_1...R_G$。常见
 
 **为什么：** baseline 的数学原因是 $E_{a\sim\pi}[b(s)\nabla log \pi(a|s)]=b(s)\nabla\sum_a\pi(a|s)=0$。因此减去只依赖状态/prompt 的 baseline 不改变无偏性。实践上它降低同一 prompt 内奖励方差，让梯度关注“相对好坏”。
 
-标准差归一化：好处是 reward scale 稳定，坏处是当组内 std 很小或全 0 时梯度消失/爆炸；不同 prompt 的 std 不同会改变题目权重；按回答长度再平均还会产生长度偏置。Dr.GRPO 的一个核心批评就是 GRPO 的长度归一化和 std 归一化会扭曲优化。可选策略包括只减均值不除 std、用全局 batch std、加 epsilon、增大 group size、提高采样温度或过滤全同奖组。参考：[GAE] [DeepSeekMath/GRPO] [Dr.GRPO] [DAPO]。
+标准差归一化：好处是 reward scale 稳定，坏处是当组内 std 很小或全 0 时梯度消失/爆炸；不同 prompt 的 std 不同会改变题目权重；按回答长度再平均还会产生长度偏置。Dr.GRPO 的一个核心批评就是 GRPO 的长度归一化和 std 归一化会扭曲优化。可选策略包括只减均值不除 std、用全局 batch std、加 epsilon、增大 group size、提高采样温度或过滤全同奖组。参考：[[GAE]] [[DeepSeekMath (2024)|DeepSeekMath/GRPO]] [[Dr. GRPO|Dr.GRPO]] [[DAPO]]。
 
 ### 6. RL 训练与 test-time scaling 的探索有什么不同？
 
@@ -191,7 +191,7 @@ GRPO：对同一 prompt 生成 $G$ 个回答，得到奖励 $R_1...R_G$。常见
 
 **陷阱：** 很多 RLVR 方法会把概率质量集中到最常见成功路径，pass@1 上升但 pass@K 或新题探索下降。SimKO、MaxRL、PKPO 等工作正是围绕“训练目标要不要对齐 pass@K/最大似然成功概率”展开。面试回答要避免绝对化：RL 与 test-time scaling 蒸馏存在交集，但覆盖范围更广；“RL 一定创造全新能力”也属于过强表述。
 
-**工程要点：** 评估时至少同时看 pass@1、pass@K、majority vote、token 长度、样本多样性、错误类型和 verifier 成本。若目标是线上单次回答，RL 提升 pass@1 很重要；若线上允许 verifier+多采样，则训练目标应显式考虑 pass@K 或多样性。参考：[SimKO] [MaxRL] [ProRL]。
+**工程要点：** 评估时至少同时看 pass@1、pass@K、majority vote、token 长度、样本多样性、错误类型和 verifier 成本。若目标是线上单次回答，RL 提升 pass@1 很重要；若线上允许 verifier+多采样，则训练目标应显式考虑 pass@K 或多样性。参考：[SimKO](https://arxiv.org/abs/2510.14807) [MaxRL](https://arxiv.org/abs/2602.02710) [ProRL](https://arxiv.org/abs/2505.24864)。
 
 ### 7. PPO clipping 怎么工作？为什么取 min？没有 clipping 会怎样？CISPO 有什么不同？
 
@@ -203,7 +203,7 @@ GRPO：对同一 prompt 生成 $G$ 个回答，得到奖励 $R_1...R_G$。常见
 
 CISPO：CISPO 的思路是直接裁剪重要性采样权重，并用 detach 后的裁剪权重乘 logprob objective；这一区别于 PPO 在两个 surrogate 之间取 min 的写法。这样做的动机是避免某些 token 因 hard clip 完全失去梯度，让所有 token 仍有更新信号，同时抑制过大的 IS 权重。
 
-**局限：** CISPO 更像一种稳定化的 biased estimator，效果依赖 clip 上下界、优势尺度和任务 reward。若 reward 噪声很大或 behavior/target 差太远，保留梯度也可能把错误方向更新得更稳定。参考：[PPO] [CISPO/MiniMax-M1]。
+**局限：** CISPO 更像一种稳定化的 biased estimator，效果依赖 clip 上下界、优势尺度和任务 reward。若 reward 噪声很大或 behavior/target 差太远，保留梯度也可能把错误方向更新得更稳定。参考：[[PPO]] [[CISPO|CISPO/MiniMax-M1]]。
 
 ### 8. GRPO 为什么包含 KL penalty？KL 怎么算？为什么 DAPO、GSPO 等方法会去掉或弱化它？
 
@@ -215,7 +215,7 @@ CISPO：CISPO 的思路是直接裁剪重要性采样权重，并用 detach 后�
 
 DAPO/GSPO 去 KL 的动机：DAPO 在若干配置中把 KL beta 设为 0，转而依赖 decoupled clipping、dynamic sampling、token-level loss、overlong reward shaping 等机制提升探索和稳定性。GSPO 把优化单元从 token-level ratio 提到 sequence-level ratio，认为 token-level IS 对长序列和 MoE 路由不稳定；更合理的 sequence-level trust region 可以减少对额外 KL penalty 的依赖。
 
-**陷阱：** 去掉 KL 不等于“KL 没用”。更准确的说法是：在强 verifier、足够好的 clip/采样/长度控制和在线监控下，显式 reference KL 可以减弱甚至关闭，以换取探索；但在偏好对齐、安全、开放问答和弱 reward 场景，KL 仍很重要。参考：[DeepSeekMath/GRPO] [DAPO] [GSPO]。
+**陷阱：** 去掉 KL 不等于“KL 没用”。更准确的说法是：在强 verifier、足够好的 clip/采样/长度控制和在线监控下，显式 reference KL 可以减弱甚至关闭，以换取探索；但在偏好对齐、安全、开放问答和弱 reward 场景，KL 仍很重要。参考：[[DeepSeekMath (2024)|DeepSeekMath/GRPO]] [[DAPO]] [[GSPO]]。
 
 ### 9. LLM 训练中如果 loss 被意外 AllReduce 多次会发生什么？
 
@@ -227,7 +227,7 @@ DAPO/GSPO 去 KL 的动机：DAPO 在若干配置中把 KL beta 设为 0，转�
 
 怎么排查：对比单卡和多卡的同一 batch 梯度范数；打印 pre/post all_reduce 的 loss、token count、non-pad token count；确认最终除数到底是 local_tokens 还是 global_tokens；用一个固定小模型做 world_size=1/2/4 的等价性测试。若 global token average 是目标，应 all_reduce numerator 和 denominator，避免先做本地 mean 再做一次 mean。
 
-**陷阱：** loss 数值“看起来更平滑”不代表正确。多次平均会让 [[Adam]] 的自适应项部分掩盖问题，但 weight decay、gradient clipping、KL coefficient、entropy bonus 的相对尺度都会变。参考：[PyTorch FSDP] [MegatronCore]。
+**陷阱：** loss 数值“看起来更平滑”不代表正确。多次平均会让 [[Adam]] 的自适应项部分掩盖问题，但 weight decay、gradient clipping、KL coefficient、entropy bonus 的相对尺度都会变。参考：[[FSDP|PyTorch FSDP]] [MegatronCore](https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/parallelism-guide.html)。
 
 ### 10. DPO 中的 reward function 是什么？会 reward hacking 吗？怎么缓解？
 
@@ -239,7 +239,7 @@ DAPO/GSPO 去 KL 的动机：DAPO 在若干配置中把 KL beta 设为 0，转�
 
 缓解：清洗偏好数据，做长度控制和 prompt 分层采样；加入 label smoothing、conservative DPO、[[IPO]]/[[KTO]]/[[ORPO]] 等变体或小 KL/regularization；监控 win-rate 之外的 factuality、安全、长度、拒答率、OOD；把 DPO 作为 warmup，再用在线 PPO/GRPO/RLVR 验证；对 reward margin 做 early stopping。
 
-**陷阱：** DPO 无需 rollout，所以便宜稳定；但它也因此不能发现当前策略的新失败模式。它的优化目标是数据集偏好，环境交互成功并未被直接优化。参考：[DPO]。
+**陷阱：** DPO 无需 rollout，所以便宜稳定；但它也因此不能发现当前策略的新失败模式。它的优化目标是数据集偏好，环境交互成功并未被直接优化。参考：[[DPO]]。
 
 ### 11. MoE 模型的 train-inference mismatch 如何处理？
 
@@ -251,7 +251,7 @@ DAPO/GSPO 去 KL 的动机：DAPO 在若干配置中把 KL beta 设为 0，转�
 
 MoE 特有措施：使用 [[Loss-Free Load Balancing|loss-free/auxiliary-loss-free load balancing]]、node-limited routing、capacity-free 或合理 capacity 策略、DeepEP/分层 all-to-all、expert parallel 与 sequence parallel 配合。若使用 routing replay，要明确它主要减少训练/推理路由差异；真实部署路径下的性能仍要单独暴露和评估。
 
-**陷阱：** 只比较 final answer accuracy 可能看不出 mismatch。要比较同一 prompt 同一 seed 下的 token logprob、first divergent token、router load、expert hotness、KV hit、[[Tensor Parallelism|TP]] size 改变后的 logits 差异。参考：[DeepSeek-V3] [GSPO] [vLLM Batch Invariance] [SGLang RL Systems]。
+**陷阱：** 只比较 final answer accuracy 可能看不出 mismatch。要比较同一 prompt 同一 seed 下的 token logprob、first divergent token、router load、expert hotness、KV hit、[[Tensor Parallelism|TP]] size 改变后的 logits 差异。参考：[[DeepSeek-V3 (2024)|DeepSeek-V3]] [[GSPO]] [vLLM Batch Invariance](https://docs.vllm.ai/en/latest/features/batch_invariance/) [SGLang RL Systems](https://docs.sglang.io/docs/advanced_features/sglang_for_rl)。
 
 ### 12. RL 训练中 group size、learning rate、PPO epochs、generation length 怎么选？
 
@@ -263,7 +263,7 @@ Learning rate：全参 RL 通常比 SFT 更小；[[LoRA]]/QLoRA 可稍大。经�
 
 PPO epochs：1-4 是常见范围。epochs 越多，样本利用率越高，但 pi_theta 与 pi_old 差距越大，clip 更频繁，旧 logprob 更不可靠。LLM RL 尤其长序列场景常用较少 epochs、较大 token batch，通过更多 fresh rollouts 换稳定性。
 
-Generation length：上限要覆盖正确解的必要推理，同时要防止模型通过“写很长”获得隐性优势。数学/代码可用 curriculum：先较短，再放长；同时监控 overlong ratio、EOS 率、截断后 reward 分布。DAPO 的 overlong reward shaping、token-level loss 和 dynamic sampling 就是围绕这类问题设计的。参考：[DAPO] [Dr.GRPO] [verl Best Practices] [Unsloth RL]。
+Generation length：上限要覆盖正确解的必要推理，同时要防止模型通过“写很长”获得隐性优势。数学/代码可用 curriculum：先较短，再放长；同时监控 overlong ratio、EOS 率、截断后 reward 分布。DAPO 的 overlong reward shaping、token-level loss 和 dynamic sampling 就是围绕这类问题设计的。参考：[[DAPO]] [[Dr. GRPO|Dr.GRPO]] [verl Best Practices](https://verl.readthedocs.io/) [Unsloth RL](https://docs.unsloth.ai/get-started/reinforcement-learning-rl-guide)。
 
 ### 13. 相比 GRPO，Dr.GRPO、DAPO、GSPO、CISPO、SAPO、DPPO、MaxRL、SimKO 分别改进了什么？局限是什么？
 
@@ -283,7 +283,7 @@ DPPO：本文按 Divergence Proximal Policy Optimization 理解。它认为 toke
 
 MaxRL：把 binary correctness 场景看成“最大化正确 rollout 的隐式似然”，构造 compute-indexed objectives，在更多采样预算下逼近 MLE，改善 test-time scaling 效率。局限是依赖可验证成功信号和多样本采样成本。
 
-SimKO：针对 RLVR 容易 pass@1 上升、pass@K 下降的过度集中问题，在高熵 fork token 上对正确轨迹提升 top-K 候选，对错误轨迹更强惩罚 top-1 候选。局限是需要 token 分布分析和额外超参；若线上只追求 deterministic pass@1，收益未必最大。参考：[Dr.GRPO] [DAPO] [GSPO] [CISPO/MiniMax-M1] [SAPO] [DPPO] [MaxRL] [SimKO]。
+SimKO：针对 RLVR 容易 pass@1 上升、pass@K 下降的过度集中问题，在高熵 fork token 上对正确轨迹提升 top-K 候选，对错误轨迹更强惩罚 top-1 候选。局限是需要 token 分布分析和额外超参；若线上只追求 deterministic pass@1，收益未必最大。参考：[[Dr. GRPO|Dr.GRPO]] [[DAPO]] [[GSPO]] [[CISPO|CISPO/MiniMax-M1]] [[SAPO]] [DPPO](https://arxiv.org/abs/2602.04879) [MaxRL](https://arxiv.org/abs/2602.02710) [SimKO](https://arxiv.org/abs/2510.14807)。
 
 ### 14. TRPO、DPPO、AReaL 如何在 RL objective 上施加 trust-region 约束？
 
@@ -297,7 +297,7 @@ DPPO：Divergence PPO 的动机是“别用 sampled token ratio 当完整 diverg
 
 AReaL：完全异步时，rollout policy 可能落后 learner 好几个版本，传统 on-policy 假设更弱。AReaL 用 workload balance 控制 staleness，并采用 staleness-enhanced PPO/相关校正，让旧样本在可控边界内仍可训练。这里的 trust-region 既包含算法公式，也包含系统层面的 policy version、最大 off-policyness、队列长度和权重同步频率。
 
-**陷阱：** KL penalty、ratio clip、divergence mask、staleness bound 都是 trust-region 手段，但没有一个能替代 reward 质量。约束太强会学不动，太弱会 drift。参考：[TRPO] [PPO] [DPPO] [AReaL]。
+**陷阱：** KL penalty、ratio clip、divergence mask、staleness bound 都是 trust-region 手段，但没有一个能替代 reward 质量。约束太强会学不动，太弱会 drift。参考：[[TRPO]] [[PPO]] [DPPO](https://arxiv.org/abs/2602.04879) [AReaL](https://inclusionai.github.io/AReaL/)。
 
 ### 15. RL 能从根本上扩展 LLM 的能力边界吗？
 
@@ -309,7 +309,7 @@ AReaL：完全异步时，rollout policy 可能落后 learner 好几个版本，
 
 **回答框架：** RL 扩边界有三个来源：第一，重加权，把已存在但低概率的正确轨迹变常见；第二，策略学习，把“尝试、验证、修正、工具调用”的过程内化；第三，环境交互，通过新数据和反馈获得预训练外的信息。前两者不等价于新增世界知识，第三者才更接近持续学习。
 
-工程含义：评估时需要超越单点 benchmark。若 RL 后 pass@1 涨、pass@256 跌，说明 exploit 强而 explore 弱；若难题集合、OOD、工具任务和高 K 都改善，才更有资格说边界扩大。参考：[DeepSeek-R1] [ProRL] [SimKO] [MaxRL]。
+工程含义：评估时需要超越单点 benchmark。若 RL 后 pass@1 涨、pass@256 跌，说明 exploit 强而 explore 弱；若难题集合、OOD、工具任务和高 K 都改善，才更有资格说边界扩大。参考：[DeepSeek-R1](https://arxiv.org/abs/2501.12948) [ProRL](https://arxiv.org/abs/2505.24864) [SimKO](https://arxiv.org/abs/2510.14807) [MaxRL](https://arxiv.org/abs/2602.02710)。
 
 ### 16. 基于 ProRL 等工作，如何理解 RL 训练边界的 scaling？
 
@@ -321,7 +321,7 @@ AReaL：完全异步时，rollout policy 可能落后 learner 好几个版本，
 
 **工程要点：** 长训要监控 KL、entropy、response length、success diversity、prompt-level learning curve、pass@K、失败簇。reference reset 能防止 KL 约束过早锁死；长度惩罚要避免把必要推理截断；任务采样要避免所有 batch 都是全 0 或全 1。
 
-**局限：** scaling RL 的瓶颈远超 GPU 数量。reward bottleneck、verifier 漏洞、长尾 rollout、staleness、MoE 路由不稳、数据泄漏都会成为新边界。参考：[ProRL] [BroRL] [MaxRL]。
+**局限：** scaling RL 的瓶颈远超 GPU 数量。reward bottleneck、verifier 漏洞、长尾 rollout、staleness、MoE 路由不稳、数据泄漏都会成为新边界。参考：[ProRL](https://arxiv.org/abs/2505.24864) [[BroRL]] [MaxRL](https://arxiv.org/abs/2602.02710)。
 
 ### 17. OPD 相比传统 RL 和 SFT 改进了什么？有哪些应用？
 
@@ -333,7 +333,7 @@ AReaL：完全异步时，rollout policy 可能落后 learner 好几个版本，
 
 应用：推理模型自蒸馏、语音/多模态 LLM 对齐、自动驾驶规划、小模型从大模型/同模型特权模式学习、工具/agent 轨迹纠错、代码错误反馈蒸馏。X-OPD/OPSD 这类方法特别强调“学生生成自己的轨迹，教师只负责在这些轨迹上给指导”。
 
-**局限：** OPD 受教师上限约束，教师成本高；若教师偏差强，学生会稳定地学错；若只蒸馏成功样式，仍可能缺少探索。最稳妥的 pipeline 往往是 SFT warmup + OPD/RL 混合 + verifier eval。参考：[OPSD/OPD] [X-OPD]。
+**局限：** OPD 受教师上限约束，教师成本高；若教师偏差强，学生会稳定地学错；若只蒸馏成功样式，仍可能缺少探索。最稳妥的 pipeline 往往是 SFT warmup + OPD/RL 混合 + verifier eval。参考：[[On-Policy Distillation|OPSD/OPD]] [[X-OPD]]。
 
 ### 18. LLM 的 reasoning ability 在训练哪个阶段 emergence？
 
@@ -345,7 +345,7 @@ SFT 阶段：SFT 强化格式、指令遵循、CoT 风格和题型模板。它�
 
 RL 阶段：DeepSeek-R1-Zero 类型结果说明，在强 verifiable reward 下，RL 可以诱发自我反思、回溯、验证、动态调整策略等行为。更准确地说，RL 放大了能带来 reward 的内部策略，并把低概率成功路径变得更常见。
 
-面试追问：如果问“aha moment 是 RL 产生的吗”，建议回答：公开结果显示 RL 训练中会出现明显行为转变，但后续分析也发现一些 base model 已有类似 bias 或雏形。因此 emergence 是预训练能力、采样探索、reward 选择和优化动力学共同作用的结果。参考：[DeepSeek-R1] [Dr.GRPO]。
+面试追问：如果问“aha moment 是 RL 产生的吗”，建议回答：公开结果显示 RL 训练中会出现明显行为转变，但后续分析也发现一些 base model 已有类似 bias 或雏形。因此 emergence 是预训练能力、采样探索、reward 选择和优化动力学共同作用的结果。参考：[DeepSeek-R1](https://arxiv.org/abs/2501.12948) [[Dr. GRPO|Dr.GRPO]]。
 
 ### 19. 从 DeepSeek-R1 到 V3.2 及未来 V4，RL 相关改进是什么？MoE 中 RL 有何不同？
 
@@ -357,7 +357,7 @@ V3/V3.2：V3 是强 MoE 基座，训练后经过 SFT 和 RL 释放能力；V3.2 
 
 MoE 中 RL 的不同：第一，模型副本和 expert states 巨大，rollout/training/ref/reference 同时放置更难；第二，routing 会随 batch、精度和 policy update 改变，导致 train-inference mismatch；第三，EP all-to-all、expert load imbalance 和长尾序列会放大系统瓶颈；第四，token-level objective 可能与 expert routing 交互不稳定，因此 GSPO、路由一致性、aux-loss-free balancing、batch invariance 更重要。
 
-未来趋势：更强稀疏注意力/长上下文、更大的可验证和 agentic 环境、更异步的 RL 系统、更精细的 trust-region/staleness 控制、更低精度 rollout 与更确定的训练-推理一致性。对“V4 会怎样”的回答应说明这是合理方向，并避免编造未公开细节。参考：[DeepSeek-R1] [DeepSeek-V3] [DeepSeek-V3.2] [GSPO]。
+未来趋势：更强稀疏注意力/长上下文、更大的可验证和 agentic 环境、更异步的 RL 系统、更精细的 trust-region/staleness 控制、更低精度 rollout 与更确定的训练-推理一致性。对“V4 会怎样”的回答应说明这是合理方向，并避免编造未公开细节。参考：[DeepSeek-R1](https://arxiv.org/abs/2501.12948) [[DeepSeek-V3 (2024)|DeepSeek-V3]] [DeepSeek-V3.2](https://arxiv.org/abs/2512.02556) [[GSPO]]。
 
 ## 二、Infrastructure
 
@@ -371,7 +371,7 @@ MoE 中 RL 的不同：第一，模型副本和 expert states 巨大，rollout/t
 
 优化：FSDP/[[ZeRO|ZeRO-3]] 可把参数、梯度、优化器状态按 DP shard，理论上训练态大头接近除以 world_size；GRPO 无 critic 省掉 value model 及其优化器；LoRA/QLoRA 只训练 adapter，可大幅省 optimizer/grad；[[Activation Checkpointing|gradient checkpointing]] 省激活但加重算；FP8/INT8 KV 降 KV cache；weight sharing/Unsloth Standby/SGLang sleep-wake 可避免训练与推理权重双常驻；sequence packing/token-level batching 提升有效利用。
 
-**陷阱：** 回答时需要超越“GRPO 两份模型”这种粗略说法。在真实系统里，reference、reward、rollout engine、optimizer states、KV cache、CUDA graph workspace、fragmentation 都占显存。参考：[DeepSeekMath/GRPO] [Unsloth RL] [SGLang RL Systems] [verl]。
+**陷阱：** 回答时需要超越“GRPO 两份模型”这种粗略说法。在真实系统里，reference、reward、rollout engine、optimizer states、KV cache、CUDA graph workspace、fragmentation 都占显存。参考：[[DeepSeekMath (2024)|DeepSeekMath/GRPO]] [Unsloth RL](https://docs.unsloth.ai/get-started/reinforcement-learning-rl-guide) [SGLang RL Systems](https://docs.sglang.io/docs/advanced_features/sglang_for_rl) [verl](https://verl.readthedocs.io/)。
 
 ### 21. 分布式推理中的 KV cache 传输优化和多 GPU 通信策略
 
@@ -383,7 +383,7 @@ KV 优化：[[Paged Attention|PagedAttention]]/vLLM 用分页管理减少 KV 内
 
 RL 特殊点：rollout 权重会频繁更新，KV cache 必须与 weight version 绑定。更新权重后继续使用旧 KV 会产生错误 logits；同一 policy version 内可以复用 prompt prefix。多轮 agent rollout 要支持 pause/resume、cache-aware routing、慢请求迁移和故障重试。
 
-指标：TTFT、TPOT、tokens/s、KV hit rate、GPU KV usage、eviction rate、跨节点带宽、all-to-all time、prefill/decode 分离后的队列长度。参考：[vLLM/PagedAttention] [SGLang] [LMCache] [SGLang RL Systems]。
+指标：TTFT、TPOT、tokens/s、KV hit rate、GPU KV usage、eviction rate、跨节点带宽、all-to-all time、prefill/decode 分离后的队列长度。参考：[[Paged Attention|vLLM/PagedAttention]] [SGLang](https://docs.sglang.ai/) [LMCache](https://arxiv.org/abs/2510.09665) [SGLang RL Systems](https://docs.sglang.io/docs/advanced_features/sglang_for_rl)。
 
 ### 22. INT8 vs FP8：取舍是什么？训练和推理偏好什么精度？
 
@@ -395,7 +395,7 @@ FP8：常见 E4M3 精度较高但范围小，E5M2 范围大但 mantissa 少。NV
 
 推理选择：若目标是最大兼容和低显存，INT8/INT4 权重量化常见；若目标是 H100/B200 上高吞吐、较小精度损失和大 KV cache，FP8 weights/KV 很有吸引力。安全/数学推理模型要特别评估 logprob、pass@K 和长上下文退化，同时参考 perplexity 之外的指标。
 
-**陷阱：** 低精度不仅影响答案，还影响 RL 的 old_logprob、KL、ratio 和 reward。训练用 BF16、rollout 用 FP8/INT8 时，可能出现训练-推理 mismatch。参考：[NVIDIA Transformer Engine FP8] [vLLM FP8 KV] [SGLang Quantization]。
+**陷阱：** 低精度不仅影响答案，还影响 RL 的 old_logprob、KL、ratio 和 reward。训练用 BF16、rollout 用 FP8/INT8 时，可能出现训练-推理 mismatch。参考：[NVIDIA Transformer Engine FP8](https://docs.nvidia.com/deeplearning/transformer-engine/) [vLLM FP8 KV](https://docs.vllm.ai/) [SGLang Quantization](https://docs.sglang.ai/)。
 
 ### 23. RL rollout 的 long-tail 问题是什么？如何处理？
 
@@ -407,7 +407,7 @@ FP8：常见 E4M3 精度较高但范围小，E5M2 范围大但 mantissa 少。NV
 
 算法影响：丢弃慢样本会改变数据分布，可能偏向短答案；截断会把潜在正确长推理当失败；异步会引入 staleness。因此需要记录每种 status：finished、truncated、timeout、tool_error、aborted，并在 advantage/reward 中区分处理。
 
-指标：p50/p95/p99 生成长度、rollout step wall time、GPU idle、waiting queue、timeout rate、truncated reward、每个 prompt 的有效样本数。参考：[AReaL] [SGLang RL Systems] [slime Fully-Async Rollout]。
+指标：p50/p95/p99 生成长度、rollout step wall time、GPU idle、waiting queue、timeout rate、truncated reward、每个 prompt 的有效样本数。参考：[AReaL](https://inclusionai.github.io/AReaL/) [SGLang RL Systems](https://docs.sglang.io/docs/advanced_features/sglang_for_rl) [slime Fully-Async Rollout](https://slime.readthedocs.io/)。
 
 ### 24. Continuous batching 在 RL 训练中引入什么问题？vLLM 和 SGLang 有何差异？
 
@@ -419,7 +419,7 @@ FP8：常见 E4M3 精度较高但范围小，E5M2 范围大但 mantissa 少。NV
 
 问题三：调度偏差。continuous batching 会优先填充短请求，提高吞吐但可能改变样本完成顺序；长请求被反复推迟会影响训练数据分布。多轮 agent 还会要求环境状态和请求状态一致，普通 text generation 的调度假设不够。
 
-vLLM vs SGLang：vLLM 的核心优势是 PagedAttention、成熟 OpenAI serving、广泛集成和详细 metrics；TRL/verl 常用它做 rollout。SGLang 强调 RadixAttention 前缀复用、程序化前端、SGLang Model Gateway、PD/EPD、RL 专用 sleep/wake、refit、pause/continue 和 deterministic inference 接口，更适合复杂 agent/RL 生命周期。两者都在快速演化，选择要看模型、硬件、框架和团队熟悉度。参考：[vLLM] [SGLang] [TRL GRPO] [SGLang RL Systems]。
+vLLM vs SGLang：vLLM 的核心优势是 PagedAttention、成熟 OpenAI serving、广泛集成和详细 metrics；TRL/verl 常用它做 rollout。SGLang 强调 RadixAttention 前缀复用、程序化前端、SGLang Model Gateway、PD/EPD、RL 专用 sleep/wake、refit、pause/continue 和 deterministic inference 接口，更适合复杂 agent/RL 生命周期。两者都在快速演化，选择要看模型、硬件、框架和团队熟悉度。参考：[vLLM](https://docs.vllm.ai/) [SGLang](https://docs.sglang.ai/) [TRL GRPO](https://huggingface.co/docs/trl/) [SGLang RL Systems](https://docs.sglang.io/docs/advanced_features/sglang_for_rl)。
 
 ### 25. 如何衡量 vLLM/SGLang 利用率？训练中如何评估 KV cache 利用率？
 
@@ -431,7 +431,7 @@ vLLM：Prometheus /metrics 暴露 running/swapped/waiting、GPU/CPU KV cache usa
 
 SGLang：开启 --enable-metrics 和 --enable-mfu-metrics 后，可看 prompt/generation tokens、token_usage、cache_hit_rate、num_running_reqs、num_used_tokens、gen_throughput、TTFT/TPOT/E2E，以及估算 per-GPU flops/read/write bytes。cache_hit_rate 和 token_usage 对前缀复用/长上下文很关键。
 
-KV 利用率：看 allocated pages/blocks、used tokens/max tokens、内部碎片、prefix hit、eviction、recompute、per-rank imbalance、FP8/BF16 KV 比例、KV transfer 带宽。RL 还要按 policy version 统计：更新权重后是否 flush cache，旧 cache 是否错误复用。参考：[vLLM Metrics] [SGLang Production Metrics]。
+KV 利用率：看 allocated pages/blocks、used tokens/max tokens、内部碎片、prefix hit、eviction、recompute、per-rank imbalance、FP8/BF16 KV 比例、KV transfer 带宽。RL 还要按 policy version 统计：更新权重后是否 flush cache，旧 cache 是否错误复用。参考：[vLLM Metrics](https://docs.vllm.ai/en/latest/usage/metrics.html) [SGLang Production Metrics](https://docs.sglang.io/docs/references/production_metrics)。
 
 ### 26. 大规模多节点 RL 训练中的反向传播如何实现？
 
@@ -443,7 +443,7 @@ FSDP/ZeRO：参数、梯度、optimizer state 按 DP shard。forward/backward �
 
 Megatron：通过 TP 切分层内矩阵，[[Pipeline Parallelism|PP]] 切分层深度，CP 切分序列，EP 切分专家，DP 复制/分片数据。backward 中会有 TP all-reduce/reduce-scatter、PP activation/gradient 传递、CP attention 通信、EP all-to-all。优点是性能强、适合超大 MoE；缺点是接入成本高。
 
-**工程要点：** activation checkpointing、sequence packing、microbatch、[[Gradient Accumulation|gradient accumulation]]、loss scaling、global token count all-reduce 必须一致。RL 的 advantage 是外部张量，通常不需要梯度；ratio 中 old_logprob 要 detach；reference/old policy 不能被误反传。参考：[PyTorch FSDP] [MegatronCore] [verl] [slime]。
+**工程要点：** activation checkpointing、sequence packing、microbatch、[[Gradient Accumulation|gradient accumulation]]、loss scaling、global token count all-reduce 必须一致。RL 的 advantage 是外部张量，通常不需要梯度；ratio 中 old_logprob 要 detach；reference/old policy 不能被误反传。参考：[[FSDP|PyTorch FSDP]] [MegatronCore](https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/parallelism-guide.html) [verl](https://verl.readthedocs.io/) [slime](https://slime.readthedocs.io/)。
 
 ### 27. 有哪些异步 RL 框架？它们解决什么同步瓶颈？
 
@@ -455,7 +455,7 @@ Megatron：通过 TP 切分层内矩阵，[[Pipeline Parallelism|PP]] 切分层�
 
 新问题：staleness、off-policy correction、样本版本管理、权重广播、KV cache invalidation、队列背压、失败重试、动态负载均衡、评估可复现性。异步提速依赖 rollout、training 和队列背压的平衡；若 rollout 远慢于 training，会训练旧数据；若 training 远慢于 rollout，队列膨胀且样本过期。
 
-面试答法：先说同步瓶颈，再说异步架构，再说 staleness 控制。回答时要超越框架名罗列。参考：[AReaL] [LlamaRL] [AsyncFlow] [slime Fully-Async Rollout] [ProRL Agent]。
+面试答法：先说同步瓶颈，再说异步架构，再说 staleness 控制。回答时要超越框架名罗列。参考：[AReaL](https://inclusionai.github.io/AReaL/) [[LlamaRL]] [[AsyncFlow]] [slime Fully-Async Rollout](https://slime.readthedocs.io/) [[ProRL Agent]]。
 
 ### 28. 在 AReaL 或 partial rollout 框架中，会保留旧策略的 KV cache 吗？
 
@@ -467,7 +467,7 @@ SGLang 语义：pause_generation 有 abort/retract/in_place 等模式。in_place
 
 AReaL 语义：AReaL 的重点是接受 rollout policy 与 learner policy 的版本差，并通过 staleness-aware objective 训练旧样本；旧 KV 迁移成新 policy KV 这条路径会破坏语义。训练时仍需用当前 actor 重新 forward 计算 logprob，old_logprob 只作为 behavior policy 记录。
 
-**陷阱：** KV cache 复用错误常表现为偶发乱码、logprob 对不上、reward 波动，直接 crash 反而不常见。RL 系统应把 cache key 包含 model version、tokenizer/chat template、position scheme、precision、TP/EP 配置。参考：[AReaL] [SGLang RL Systems] [slime]。
+**陷阱：** KV cache 复用错误常表现为偶发乱码、logprob 对不上、reward 波动，直接 crash 反而不常见。RL 系统应把 cache key 包含 model version、tokenizer/chat template、position scheme、precision、TP/EP 配置。参考：[AReaL](https://inclusionai.github.io/AReaL/) [SGLang RL Systems](https://docs.sglang.io/docs/advanced_features/sglang_for_rl) [slime](https://slime.readthedocs.io/)。
 
 ### 29. Expert Parallelism 如何影响 MoE 吞吐？
 
@@ -479,7 +479,7 @@ AReaL 语义：AReaL 的重点是接受 rollout policy 与 learner policy 的版
 
 优化：node-limited routing 把专家限制在拓扑友好的范围；auxiliary-loss-free/loss-free load balancing 用动态 bias 控制负载且减少干扰梯度；DeepEP/高性能 dispatcher 降低 all-to-all；expert tensor parallel 处理超大 expert；sequence parallel 与 EP/TP 配合；batch-level overlap 隐藏 EP-A2A 通信。
 
-面试要点：EP 不一定越大越好。要用 profiler 看 all-to-all time、expert token histogram、dropless capacity、GEMM occupancy、跨节点带宽。MoE RL 还要看 routing determinism 和训练-推理一致性。参考：[MegatronCore MoE] [DeepSeek-V3]。
+面试要点：EP 不一定越大越好。要用 profiler 看 all-to-all time、expert token histogram、dropless capacity、GEMM occupancy、跨节点带宽。MoE RL 还要看 routing determinism 和训练-推理一致性。参考：[MegatronCore MoE](https://docs.nvidia.com/megatron-core/developer-guide/latest/api-guide/moe.html) [[DeepSeek-V3 (2024)|DeepSeek-V3]]。
 
 ### 30. 长上下文训练中如何设计 compute-communication overlap？Megatron 与 FSDP 的并行策略有何不同？
 
@@ -491,7 +491,7 @@ Overlap 设计：TP 的 all-reduce 可与下一层计算 overlap；FSDP 的参�
 
 Megatron：提供 TP、PP、DP、SP、CP、EP、distributed optimizer、MoE dispatcher 等强组合，适合千卡/万卡、超大 dense/MoE、长上下文极致性能。缺点是模型代码和配置复杂，对团队系统能力要求高。
 
-FSDP：包装式分片参数/梯度/optimizer，易接 HuggingFace，弹性好，适合中大模型和研究迭代。缺点是单靠 FSDP 不解决层内矩阵太大、长序列 attention 和 MoE expert all-to-all；常需与 TP/CP/activation checkpointing 混用。参考：[PyTorch FSDP] [MegatronCore] [Megatron Context Parallel]。
+FSDP：包装式分片参数/梯度/optimizer，易接 HuggingFace，弹性好，适合中大模型和研究迭代。缺点是单靠 FSDP 不解决层内矩阵太大、长序列 attention 和 MoE expert all-to-all；常需与 TP/CP/activation checkpointing 混用。参考：[[FSDP|PyTorch FSDP]] [MegatronCore](https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/parallelism-guide.html) [Megatron Context Parallel](https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/parallelism-guide.html)。
 
 ### 31. 如何启用确定性执行？什么是 batch invariance？原因是什么？atomic add 参与吗？能解决吗？
 
@@ -503,7 +503,7 @@ atomic add：atomic 操作常是非确定性的来源之一，因为多个线程
 
 怎么启用：固定 random/NumPy/PyTorch seed；关闭 dropout；torch.use_deterministic_algorithms(True)；设置 CUBLAS_WORKSPACE_CONFIG；关闭 cuDNN benchmark；固定 tokenizer/chat template/position id；固定 TP size 和 kernel；使用 vLLM batch invariance 或 SGLang deterministic inference；禁用会引入非确定性的 custom all-reduce；对 MoE 固定 capacity/routing 策略。
 
-**陷阱：** 确定性通常有性能代价，跨 PyTorch/CUDA/驱动/GPU 架构一致性也需要单独验证。temperature=0 仍不足以保证 batch invariance；greedy decoding 也会因 logits 微小差异在近 tie token 处分叉。参考：[PyTorch Reproducibility] [vLLM Batch Invariance] [SGLang RL Systems] [TP-invariant inference]。
+**陷阱：** 确定性通常有性能代价，跨 PyTorch/CUDA/驱动/GPU 架构一致性也需要单独验证。temperature=0 仍不足以保证 batch invariance；greedy decoding 也会因 logits 微小差异在近 tie token 处分叉。参考：[PyTorch Reproducibility](https://docs.pytorch.org/docs/stable/notes/randomness.html) [vLLM Batch Invariance](https://docs.vllm.ai/en/latest/features/batch_invariance/) [SGLang RL Systems](https://docs.sglang.io/docs/advanced_features/sglang_for_rl) [TP-invariant inference](https://arxiv.org/abs/2511.17826)。
 
 ### 32. AReaL 和 slime 对 RL rollout bottleneck 的理解有何不同？
 
@@ -515,7 +515,7 @@ slime：官方定位是连接 Megatron 与 SGLang 的 RL post-training 框架，
 
 差异：AReaL 更像“异步 RL 系统和算法论文”，重点是异步带来的 off-policyness 如何被约束；slime 更像“可落地的训练-推理-数据生成框架”，重点是各种 rollout 形态都能进入统一 buffer 和 Megatron loss。两者都处理长尾，但 AReaL 从训练/生成解耦入手，slime 从 rollout driver、队列和 SGLang 控制接口入手。
 
-选择：若研究异步 RL 理论和 staleness，讲 AReaL；若面试岗位强调 Megatron、SGLang、MoE、custom agent env 和生产训练链路，讲 slime。参考：[AReaL] [slime] [slime Fully-Async Rollout]。
+选择：若研究异步 RL 理论和 staleness，讲 AReaL；若面试岗位强调 Megatron、SGLang、MoE、custom agent env 和生产训练链路，讲 slime。参考：[AReaL](https://inclusionai.github.io/AReaL/) [slime](https://slime.readthedocs.io/) [slime Fully-Async Rollout](https://slime.readthedocs.io/)。
 
 ### 33. 全异步 RL 中如何理解 staleness？实践中典型值是多少？
 
@@ -527,7 +527,7 @@ slime：官方定位是连接 Megatron 与 SGLang 的 RL post-training 框架，
 
 怎么控制：限制 rollout queue 长度；训练/rollout throughput 配平；对超过阈值的样本降权或丢弃；用 policy_version 和 old_logprob 做精确 ratio；监控 per-sample KL、clip fraction by staleness、reward by staleness；周期性同步权重；必要时 reference/prox policy 插值。
 
-面试答法：先定义，再说 trade-off，再说指标。典型工程回答是“从 staleness=0 跑通等价性，再逐步放到 1、2、4，观察 KL/clip/reward；上线同时看分布与均值”。参考：[AReaL] [Mu-GRPO] [A-3PO]。
+面试答法：先定义，再说 trade-off，再说指标。典型工程回答是“从 staleness=0 跑通等价性，再逐步放到 1、2、4，观察 KL/clip/reward；上线同时看分布与均值”。参考：[AReaL](https://inclusionai.github.io/AReaL/) [Mu-GRPO](https://arxiv.org/abs/2605.17570) [A-3PO](https://arxiv.org/abs/2512.06547)。
 
 ### 34. slime 中数据如何流动？如何与 Megatron 集成？loss 怎么算？
 
@@ -539,7 +539,7 @@ Megatron 集成：slime 直接传 Megatron 参数配置训练后端，例如 TP�
 
 Loss 计算：slime 支持 GRPO、GSPO、[[REINFORCE++]]、PPO 等 advantage estimator。训练时对 response token 计算 logprob，与 old_logprob 构造 ratio/clip，乘 advantage 和 loss_mask。默认可按 per-sample mean：$mean_i(sum\ token\_loss_i / len_i)$，也可按 per-token：$sum\ losses / sum\ lengths$。PPO 还需要 critic/value loss；OPD 可作为正交选项加入蒸馏信号。
 
-**工程要点：** loss_mask 决定哪些 token 学；status 决定截断/超时样本如何处理；per-sample vs per-token 会改变长度偏置；SGLang context length 可与训练不同但要保证 logprob 重算一致；权重更新后 cache flush/version 管理非常重要。参考：[slime Usage Guide] [slime]。
+**工程要点：** loss_mask 决定哪些 token 学；status 决定截断/超时样本如何处理；per-sample vs per-token 会改变长度偏置；SGLang context length 可与训练不同但要保证 logprob 重算一致；权重更新后 cache flush/version 管理非常重要。参考：[slime Usage Guide](https://slime.readthedocs.io/) [slime](https://slime.readthedocs.io/)。
 
 ### 35. VeRL、TRL、Unsloth、AReaL、slime 之间怎么选？
 
@@ -555,90 +555,90 @@ AReaL：适合重点解决 long-tail、异步 rollout/training、staleness 和 a
 
 slime：适合 Megatron+SGLang、MoE、大规模 post-training、custom rollout/reward/environment、GLM/DeepSeek/Qwen 类模型工程。局限是栈更“重”，对 Megatron/SGLang 经验要求高；若只是小模型实验会过度复杂。
 
-面试答法：先问约束：GPU 数、模型大小、全参还是 LoRA、算法、rollout engine、是否 agent、多轮/工具、是否 MoE。然后给决策：原型 TRL；低显存 Unsloth；通用生产 verl；异步 AReaL；Megatron+SGLang 大模型 slime。参考：[TRL] [Unsloth RL] [verl] [AReaL] [slime]。
+面试答法：先问约束：GPU 数、模型大小、全参还是 LoRA、算法、rollout engine、是否 agent、多轮/工具、是否 MoE。然后给决策：原型 TRL；低显存 Unsloth；通用生产 verl；异步 AReaL；Megatron+SGLang 大模型 slime。参考：[TRL](https://huggingface.co/docs/trl/) [Unsloth RL](https://docs.unsloth.ai/get-started/reinforcement-learning-rl-guide) [verl](https://verl.readthedocs.io/) [AReaL](https://inclusionai.github.io/AReaL/) [slime](https://slime.readthedocs.io/)。
 
 ## 三、参考文献与延伸阅读
 
 以下参考用于定位原始论文、官方文档或方法来源。面试准备时建议优先读官方论文/文档中的 objective、system diagram、ablation 和 limitations；二手解读只适合作为辅助。
 
-**[TRPO]** Schulman et al., Trust Region Policy Optimization, arXiv:1502.05477, https://arxiv.org/abs/1502.05477
+**[TRPO](https://arxiv.org/abs/1502.05477)** Schulman et al., Trust Region Policy Optimization, arXiv:1502.05477, https://arxiv.org/abs/1502.05477
 
-**[PPO]** Schulman et al., Proximal Policy Optimization Algorithms, arXiv:1707.06347, https://arxiv.org/abs/1707.06347
+**[PPO](https://arxiv.org/abs/1707.06347)** Schulman et al., Proximal Policy Optimization Algorithms, arXiv:1707.06347, https://arxiv.org/abs/1707.06347
 
-**[GAE]** Schulman et al., High-Dimensional Continuous Control Using Generalized Advantage Estimation, arXiv:1506.02438, https://arxiv.org/abs/1506.02438
+**[GAE](https://arxiv.org/abs/1506.02438)** Schulman et al., High-Dimensional Continuous Control Using Generalized Advantage Estimation, arXiv:1506.02438, https://arxiv.org/abs/1506.02438
 
-**[DPO]** Rafailov et al., Direct Preference Optimization: Your Language Model is Secretly a Reward Model, arXiv:2305.18290, https://arxiv.org/abs/2305.18290
+**[DPO](https://arxiv.org/abs/2305.18290)** Rafailov et al., Direct Preference Optimization: Your Language Model is Secretly a Reward Model, arXiv:2305.18290, https://arxiv.org/abs/2305.18290
 
-**[DeepSeekMath/GRPO]** Shao et al., DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models, arXiv:2402.03300, https://arxiv.org/abs/2402.03300
+**[DeepSeekMath/GRPO](https://arxiv.org/abs/2402.03300)** Shao et al., DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models, arXiv:2402.03300, https://arxiv.org/abs/2402.03300
 
-**[DeepSeek-R1]** DeepSeek-AI, DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning, arXiv:2501.12948, https://arxiv.org/abs/2501.12948
+**[DeepSeek-R1](https://arxiv.org/abs/2501.12948)** DeepSeek-AI, DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning, arXiv:2501.12948, https://arxiv.org/abs/2501.12948
 
-**[DeepSeek-V3]** DeepSeek-AI, DeepSeek-V3 Technical Report, arXiv:2412.19437, https://arxiv.org/abs/2412.19437
+**[DeepSeek-V3](https://arxiv.org/abs/2412.19437)** DeepSeek-AI, DeepSeek-V3 Technical Report, arXiv:2412.19437, https://arxiv.org/abs/2412.19437
 
-**[DeepSeek-V3.2]** DeepSeek-AI, DeepSeek-V3.2: Pushing the Frontier of Open Large Language Models, arXiv:2512.02556 / Hugging Face model card, https://arxiv.org/abs/2512.02556
+**[DeepSeek-V3.2](https://arxiv.org/abs/2512.02556)** DeepSeek-AI, DeepSeek-V3.2: Pushing the Frontier of Open Large Language Models, arXiv:2512.02556 / Hugging Face model card, https://arxiv.org/abs/2512.02556
 
-**[Dr.GRPO]** Understanding R1-Zero-Like Training: A Critical Perspective / Dr.GRPO, arXiv:2503.20783, https://arxiv.org/abs/2503.20783
+**[Dr.GRPO](https://arxiv.org/abs/2503.20783)** Understanding R1-Zero-Like Training: A Critical Perspective / Dr.GRPO, arXiv:2503.20783, https://arxiv.org/abs/2503.20783
 
-**[DAPO]** Yu et al., DAPO: An Open-Source LLM Reinforcement Learning System at Scale, arXiv:2503.14476, https://arxiv.org/abs/2503.14476
+**[DAPO](https://arxiv.org/abs/2503.14476)** Yu et al., DAPO: An Open-Source LLM Reinforcement Learning System at Scale, arXiv:2503.14476, https://arxiv.org/abs/2503.14476
 
-**[GSPO]** Group Sequence Policy Optimization, arXiv:2507.18071, https://arxiv.org/abs/2507.18071
+**[GSPO](https://arxiv.org/abs/2507.18071)** Group Sequence Policy Optimization, arXiv:2507.18071, https://arxiv.org/abs/2507.18071
 
-**[CISPO/MiniMax-M1]** MiniMax-M1: Scaling Test-Time Compute Efficiently with Lightning Attention / CISPO, arXiv:2506.13585, https://arxiv.org/abs/2506.13585
+**[CISPO/MiniMax-M1](https://arxiv.org/abs/2506.13585)** MiniMax-M1: Scaling Test-Time Compute Efficiently with Lightning Attention / CISPO, arXiv:2506.13585, https://arxiv.org/abs/2506.13585
 
-**[SAPO]** Segment-Aligned Policy Optimization and Soft Adaptive Policy Optimization related materials; note that SAPO is an overloaded acronym in 2025-2026 literature.
+**[[SAPO]]** Segment-Aligned Policy Optimization and Soft Adaptive Policy Optimization related materials; note that SAPO is an overloaded acronym in 2025-2026 literature.
 
-**[DPPO]** Qi et al., Rethinking the Trust Region in LLM Reinforcement Learning / Divergence Proximal Policy Optimization, arXiv:2602.04879, https://arxiv.org/abs/2602.04879
+**[DPPO](https://arxiv.org/abs/2602.04879)** Qi et al., Rethinking the Trust Region in LLM Reinforcement Learning / Divergence Proximal Policy Optimization, arXiv:2602.04879, https://arxiv.org/abs/2602.04879
 
-**[MaxRL]** Tajwar et al., Maximum Likelihood Reinforcement Learning, arXiv:2602.02710, https://arxiv.org/abs/2602.02710
+**[MaxRL](https://arxiv.org/abs/2602.02710)** Tajwar et al., Maximum Likelihood Reinforcement Learning, arXiv:2602.02710, https://arxiv.org/abs/2602.02710
 
-**[SimKO]** Peng et al., SimKO: Simple Pass@K Policy Optimization, arXiv:2510.14807, https://arxiv.org/abs/2510.14807
+**[SimKO](https://arxiv.org/abs/2510.14807)** Peng et al., SimKO: Simple Pass@K Policy Optimization, arXiv:2510.14807, https://arxiv.org/abs/2510.14807
 
-**[ProRL]** ProRL: Prolonged Reinforcement Learning Expands Reasoning Boundaries in LLMs, arXiv:2505.24864, https://arxiv.org/abs/2505.24864
+**[ProRL](https://arxiv.org/abs/2505.24864)** ProRL: Prolonged Reinforcement Learning Expands Reasoning Boundaries in LLMs, arXiv:2505.24864, https://arxiv.org/abs/2505.24864
 
-**[BroRL]** BroRL: Broadening Exploration for Prolonged Reinforcement Learning in LLMs, related ProRL follow-up, 2026.
+**[[BroRL]]** BroRL: Broadening Exploration for Prolonged Reinforcement Learning in LLMs, related ProRL follow-up, 2026.
 
-**[OPSD/OPD]** Self-Distilled Reasoner / On-Policy Self-Distillation, arXiv:2601.18734, https://arxiv.org/abs/2601.18734
+**[OPSD/OPD](https://arxiv.org/abs/2601.18734)** Self-Distilled Reasoner / On-Policy Self-Distillation, arXiv:2601.18734, https://arxiv.org/abs/2601.18734
 
-**[X-OPD]** Cross-modal On-Policy Distillation for speech/multimodal LLM post-training, 2026 literature.
+**[[X-OPD]]** Cross-modal On-Policy Distillation for speech/multimodal LLM post-training, 2026 literature.
 
-**[CTPO]** Cumulative Token Policy Optimization, arXiv:2503/2025 literature on prefix-level/token-level IS correction.
+**[[CTPO]]** Cumulative Token Policy Optimization, arXiv:2503/2025 literature on prefix-level/token-level IS correction.
 
-**[HybridFlow/verl]** Sheng et al., HybridFlow: A Flexible and Efficient RLHF Framework, arXiv:2409.19256; verl docs: https://verl.readthedocs.io/
+**[HybridFlow/verl](https://verl.readthedocs.io/)** Sheng et al., HybridFlow: A Flexible and Efficient RLHF Framework, arXiv:2409.19256; verl docs: https://verl.readthedocs.io/
 
-**[TRL]** Hugging Face TRL documentation, GRPOTrainer/DPO/PPO, https://huggingface.co/docs/trl/
+**[TRL](https://huggingface.co/docs/trl/)** Hugging Face TRL documentation, GRPOTrainer/DPO/PPO, https://huggingface.co/docs/trl/
 
-**[Unsloth RL]** Unsloth Reinforcement Learning Guide and Memory Efficient RL documentation, https://docs.unsloth.ai/get-started/reinforcement-learning-rl-guide
+**[Unsloth RL](https://docs.unsloth.ai/get-started/reinforcement-learning-rl-guide)** Unsloth Reinforcement Learning Guide and Memory Efficient RL documentation, https://docs.unsloth.ai/get-started/reinforcement-learning-rl-guide
 
-**[AReaL]** Fu et al., AReaL: A Large-Scale Asynchronous Reinforcement Learning System for Language Reasoning, arXiv:2505.24298; docs: https://inclusionai.github.io/AReaL/
+**[AReaL](https://inclusionai.github.io/AReaL/)** Fu et al., AReaL: A Large-Scale Asynchronous Reinforcement Learning System for Language Reasoning, arXiv:2505.24298; docs: https://inclusionai.github.io/AReaL/
 
-**[slime]** slime documentation: Megatron + SGLang post-training RL framework, https://slime.readthedocs.io/
+**[slime](https://slime.readthedocs.io/)** slime documentation: Megatron + SGLang post-training RL framework, https://slime.readthedocs.io/
 
-**[vLLM/PagedAttention]** Kwon et al., Efficient Memory Management for Large Language Model Serving with PagedAttention, arXiv:2309.06180; vLLM docs: https://docs.vllm.ai/
+**[vLLM/PagedAttention](https://docs.vllm.ai/)** Kwon et al., Efficient Memory Management for Large Language Model Serving with PagedAttention, arXiv:2309.06180; vLLM docs: https://docs.vllm.ai/
 
-**[SGLang]** Zheng et al., SGLang: Efficient Execution of Structured Language Model Programs, arXiv:2312.07104; docs: https://docs.sglang.ai/
+**[SGLang](https://docs.sglang.ai/)** Zheng et al., SGLang: Efficient Execution of Structured Language Model Programs, arXiv:2312.07104; docs: https://docs.sglang.ai/
 
-**[LMCache]** LMCache: An Efficient KV Cache Layer for Enterprise-Scale LLM Inference, arXiv:2510.09665, https://arxiv.org/abs/2510.09665
+**[LMCache](https://arxiv.org/abs/2510.09665)** LMCache: An Efficient KV Cache Layer for Enterprise-Scale LLM Inference, arXiv:2510.09665, https://arxiv.org/abs/2510.09665
 
-**[SGLang RL Systems]** SGLang for RL Systems documentation, sleep/wake, refit, pause/resume, deterministic inference, https://docs.sglang.io/docs/advanced_features/sglang_for_rl
+**[SGLang RL Systems](https://docs.sglang.io/docs/advanced_features/sglang_for_rl)** SGLang for RL Systems documentation, sleep/wake, refit, pause/resume, deterministic inference, https://docs.sglang.io/docs/advanced_features/sglang_for_rl
 
-**[vLLM Metrics]** vLLM production metrics documentation, https://docs.vllm.ai/en/latest/usage/metrics.html
+**[vLLM Metrics](https://docs.vllm.ai/en/latest/usage/metrics.html)** vLLM production metrics documentation, https://docs.vllm.ai/en/latest/usage/metrics.html
 
-**[SGLang Production Metrics]** SGLang Production Metrics documentation, https://docs.sglang.io/docs/references/production_metrics
+**[SGLang Production Metrics](https://docs.sglang.io/docs/references/production_metrics)** SGLang Production Metrics documentation, https://docs.sglang.io/docs/references/production_metrics
 
-**[vLLM Batch Invariance]** vLLM Batch Invariance documentation, https://docs.vllm.ai/en/latest/features/batch_invariance/
+**[vLLM Batch Invariance](https://docs.vllm.ai/en/latest/features/batch_invariance/)** vLLM Batch Invariance documentation, https://docs.vllm.ai/en/latest/features/batch_invariance/
 
-**[PyTorch FSDP]** PyTorch Fully Sharded Data Parallel documentation, https://docs.pytorch.org/docs/stable/fsdp.html
+**[PyTorch FSDP](https://docs.pytorch.org/docs/stable/fsdp.html)** PyTorch Fully Sharded Data Parallel documentation, https://docs.pytorch.org/docs/stable/fsdp.html
 
-**[MegatronCore]** NVIDIA Megatron Core Parallelism Strategies Guide, https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/parallelism-guide.html
+**[MegatronCore](https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/parallelism-guide.html)** NVIDIA Megatron Core Parallelism Strategies Guide, https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/parallelism-guide.html
 
-**[MegatronCore MoE]** NVIDIA Megatron Core MoE documentation, https://docs.nvidia.com/megatron-core/developer-guide/latest/api-guide/moe.html
+**[MegatronCore MoE](https://docs.nvidia.com/megatron-core/developer-guide/latest/api-guide/moe.html)** NVIDIA Megatron Core MoE documentation, https://docs.nvidia.com/megatron-core/developer-guide/latest/api-guide/moe.html
 
-**[NVIDIA Transformer Engine FP8]** NVIDIA Transformer Engine FP8 documentation, https://docs.nvidia.com/deeplearning/transformer-engine/
+**[NVIDIA Transformer Engine FP8](https://docs.nvidia.com/deeplearning/transformer-engine/)** NVIDIA Transformer Engine FP8 documentation, https://docs.nvidia.com/deeplearning/transformer-engine/
 
-**[PyTorch Reproducibility]** PyTorch Reproducibility documentation, https://docs.pytorch.org/docs/stable/notes/randomness.html
+**[PyTorch Reproducibility](https://docs.pytorch.org/docs/stable/notes/randomness.html)** PyTorch Reproducibility documentation, https://docs.pytorch.org/docs/stable/notes/randomness.html
 
-**[TP-invariant inference]** Deterministic Inference across Tensor Parallel Sizes That Eliminates Training-Inference Mismatch, arXiv:2511.17826, https://arxiv.org/abs/2511.17826
+**[TP-invariant inference](https://arxiv.org/abs/2511.17826)** Deterministic Inference across Tensor Parallel Sizes That Eliminates Training-Inference Mismatch, arXiv:2511.17826, https://arxiv.org/abs/2511.17826
 
-**[Mu-GRPO]** How Off-Policy Can GRPO Be? Mu-GRPO for Efficient LLM Reinforcement Learning, arXiv:2605.17570, https://arxiv.org/abs/2605.17570
+**[Mu-GRPO](https://arxiv.org/abs/2605.17570)** How Off-Policy Can GRPO Be? Mu-GRPO for Efficient LLM Reinforcement Learning, arXiv:2605.17570, https://arxiv.org/abs/2605.17570
 
-**[A-3PO]** A-3PO: Accelerating Asynchronous LLM Training with Staleness-aware Proximal Policy Approximation, arXiv:2512.06547, https://arxiv.org/abs/2512.06547
+**[A-3PO](https://arxiv.org/abs/2512.06547)** A-3PO: Accelerating Asynchronous LLM Training with Staleness-aware Proximal Policy Approximation, arXiv:2512.06547, https://arxiv.org/abs/2512.06547

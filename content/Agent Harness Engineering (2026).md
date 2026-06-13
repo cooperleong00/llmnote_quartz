@@ -26,11 +26,10 @@ year: 2026
 venue: Under review as submission to TMLR
 description: "Agent Harness Engineering: A Survey 提出 ETCLOVG 七层分类，将长程代理可靠性解释为模型外部执行 harness 的系统工程问题"
 aliases:
-  - Agent Harness Engineering
+  - "Agent Harness Engineering: A Survey"
   - Agent Harness Engineering Survey
   - ETCLOVG
   - ETCLOVG Taxonomy
-  - Harness Engineering
 prerequisites:
   - "[[Agentic RL]]"
   - "[[SWE-Bench]]"
@@ -43,7 +42,7 @@ tags:
   - agent
   - infrastructure
 created: 2026-05-31
-updated: 2026-05-31T17:53
+updated: 2026-06-13
 ---
 
 # Agent Harness Engineering (2026)
